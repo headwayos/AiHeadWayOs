@@ -290,3 +290,5 @@ agent_communication:
     - message: "Completed testing of all backend APIs. The Topics API and List Learning Plans API are working correctly. The Health Check API is implemented but reports unhealthy status for both Ollama and database connections. The Generate Learning Plan API fails with a 503 error because it cannot connect to the Ollama service. Could not test the Get Specific Learning Plan API and Delete Learning Plan API because no plans are available in the database."
     - agent: "testing"
     - message: "Starting frontend testing based on the review request. Will test the Initial Page Load, Form Functionality, AI Plan Generation, Plan Management, and Navigation."
+    - agent: "testing"
+    - message: "Completed frontend testing. The Initial Page Load, Form Functionality, Plan Management, and Navigation tasks are working correctly. The AI Plan Generation task is not working due to the backend issue with the Ollama service connection. The frontend correctly shows a loading spinner when generating a plan, but the generation process never completes because of the backend issue."
