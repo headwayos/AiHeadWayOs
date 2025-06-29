@@ -1176,6 +1176,163 @@ async def get_assessment_result(result_id: str):
         result.pop("_id", None)
     return result
 
+# Learning session endpoints
+@api_router.post("/start-learning-session")
+async def start_learning_session(plan_id: str, user_id: str = "anonymous"):
+    """Start a new learning session"""
+    
+    # Verify plan exists
+    plan = await db.learning_plans.find_one({"id": plan_id})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Learning plan not found")
+    
+    # Create new session
+    session = LearningSession(
+        plan_id=plan_id,
+        user_id=user_id,
+        current_module="Getting Started"
+    )
+    
+    # Save session
+    session_dict = session.dict()
+    await db.learning_sessions.insert_one(session_dict)
+    
+    logger.info(f"Learning session started with ID: {session.id}")
+    
+    return {
+        "success": True,
+        "session_id": session.id,
+        "plan_id": plan_id,
+        "current_module": session.current_module
+    }
+
+@api_router.get("/learning-session/{session_id}")
+async def get_learning_session(session_id: str):
+    """Get learning session details"""
+    session = await db.learning_sessions.find_one({"id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Learning session not found")
+    
+    if "_id" in session:
+        session.pop("_id", None)
+    return session
+
+@api_router.post("/chat-with-ai")
+async def chat_with_ai(session_id: str, message: str):
+    """Chat with AI tutor during learning session"""
+    
+    # Verify session exists
+    session = await db.learning_sessions.find_one({"id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Learning session not found")
+    
+    # Get the learning plan for context
+    plan = await db.learning_plans.find_one({"id": session["plan_id"]})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Learning plan not found")
+    
+    # Create user message
+    user_message = ChatMessage(
+        session_id=session_id,
+        sender="user",
+        message=message
+    )
+    
+    # Save user message
+    await db.chat_messages.insert_one(user_message.dict())
+    
+    # Generate AI response
+    ai_prompt = f"""
+You are an expert cybersecurity tutor helping a student learn {plan['topic']}. 
+The student is at {plan['level']} level and currently studying: {session['current_module']}.
+
+Student's question/message: {message}
+
+Provide a helpful, clear, and educational response. Be encouraging and provide practical examples when possible.
+Keep responses concise but informative. If the student asks about a specific topic, provide step-by-step explanations.
+"""
+    
+    try:
+        ai_response_text = await generate_with_ollama(ai_prompt)
+        
+        # Create AI message
+        ai_message = ChatMessage(
+            session_id=session_id,
+            sender="ai",
+            message=ai_response_text,
+            message_type="explanation"
+        )
+        
+        # Save AI message
+        await db.chat_messages.insert_one(ai_message.dict())
+        
+        # Update session stats
+        await db.learning_sessions.find_one_and_update(
+            {"id": session_id},
+            {
+                "$inc": {
+                    "ai_interactions": 1,
+                    "questions_asked": 1
+                },
+                "$set": {
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        return {
+            "success": True,
+            "ai_response": ai_response_text,
+            "message_id": ai_message.id
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating AI response: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate AI response")
+
+@api_router.get("/chat-history/{session_id}")
+async def get_chat_history(session_id: str, limit: int = 50):
+    """Get chat history for a learning session"""
+    
+    cursor = db.chat_messages.find({"session_id": session_id}).sort("timestamp", 1).limit(limit)
+    messages = await cursor.to_list(length=limit)
+    
+    # Remove MongoDB _id from all messages
+    for message in messages:
+        if "_id" in message:
+            message.pop("_id", None)
+    
+    return {
+        "session_id": session_id,
+        "messages": messages,
+        "total": len(messages)
+    }
+
+@api_router.post("/update-progress")
+async def update_learning_progress(session_id: str, progress_percentage: float, time_spent: int):
+    """Update learning progress for a session"""
+    
+    # Update session
+    result = await db.learning_sessions.find_one_and_update(
+        {"id": session_id},
+        {
+            "$set": {
+                "progress_percentage": progress_percentage,
+                "time_spent": time_spent,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="Learning session not found")
+    
+    return {
+        "success": True,
+        "progress_percentage": progress_percentage,
+        "time_spent": time_spent
+    }
+
 @api_router.post("/generate-learning-plan", response_model=LearningPlanResponse)
 async def generate_learning_plan(request: LearningPlanRequest):
     """Generate a comprehensive cybersecurity learning plan"""
