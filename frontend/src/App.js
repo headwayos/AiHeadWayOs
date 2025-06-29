@@ -654,7 +654,7 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack }) 
 };
 
 // My Plans Component
-const MyPlans = () => {
+const MyPlans = ({ onStartLearning, onBack }) => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -686,6 +686,10 @@ const MyPlans = () => {
     }
   };
 
+  const startLearningSession = (planId) => {
+    onStartLearning(planId);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -696,12 +700,26 @@ const MyPlans = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
+      {onBack && (
+        <div className="mb-6">
+          <button
+            onClick={onBack}
+            className="flex items-center text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Dashboard
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Plans List */}
         <div className="lg:col-span-1">
           <div className="bg-gray-800 rounded-2xl p-6 shadow-2xl">
             <h2 className="text-2xl font-bold text-white mb-6">
-              Saved Plans ({plans.length})
+              📚 Saved Plans ({plans.length})
             </h2>
             
             {plans.length === 0 ? (
@@ -726,9 +744,14 @@ const MyPlans = () => {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-white text-sm">
-                          {plan.topic.replace('-', ' ').toUpperCase()}
-                        </h3>
+                        <div className="flex items-center mb-2">
+                          <h3 className="font-semibold text-white text-sm">
+                            {plan.topic.replace('-', ' ').toUpperCase()}
+                          </h3>
+                          {plan.approved && (
+                            <span className="ml-2 text-green-400 text-xs">✅</span>
+                          )}
+                        </div>
                         <p className="text-gray-300 text-xs">
                           {plan.level} • {plan.duration_weeks} weeks
                         </p>
@@ -765,32 +788,74 @@ const MyPlans = () => {
             {selectedPlan ? (
               <div className="space-y-6">
                 <div className="bg-gray-700 rounded-lg p-4">
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    {selectedPlan.topic.replace('-', ' ').toUpperCase()}
-                  </h3>
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-white">
+                      {selectedPlan.topic.replace('-', ' ').toUpperCase()}
+                    </h3>
+                    {selectedPlan.approved && (
+                      <span className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        ✅ Approved
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-300 mb-4">
                     <span>Level: {selectedPlan.level}</span>
                     <span>Duration: {selectedPlan.duration_weeks} weeks</span>
                     <span>Created: {new Date(selectedPlan.created_at).toLocaleDateString()}</span>
                   </div>
+                  
                   {selectedPlan.focus_areas && selectedPlan.focus_areas.length > 0 && (
-                    <div className="mt-2">
+                    <div className="mb-4">
                       <span className="text-sm text-gray-400">Focus Areas: </span>
                       <span className="text-sm text-gray-300">
                         {selectedPlan.focus_areas.join(', ')}
                       </span>
                     </div>
                   )}
+
+                  {/* Action Buttons */}
+                  <div className="flex space-x-4 pt-4">
+                    {selectedPlan.approved ? (
+                      <button
+                        onClick={() => startLearningSession(selectedPlan.id)}
+                        className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105"
+                      >
+                        🚀 Start Learning Session
+                      </button>
+                    ) : (
+                      <div className="text-sm text-gray-400 bg-gray-600 px-4 py-2 rounded-lg">
+                        ⏳ Plan needs approval before starting learning session
+                      </div>
+                    )}
+                    
+                    <button
+                      onClick={() => deletePlan(selectedPlan.id)}
+                      className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      🗑️ Delete Plan
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="bg-gray-700 rounded-lg p-4">
-                  <h4 className="font-semibold text-white mb-3">Learning Plan Content</h4>
+                  <h4 className="font-semibold text-white mb-3">📖 Learning Plan Content</h4>
                   <div className="max-h-96 overflow-y-auto">
                     <pre className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
                       {selectedPlan.curriculum}
                     </pre>
                   </div>
                 </div>
+
+                {/* Personalization Info */}
+                {selectedPlan.assessment_result_id && (
+                  <div className="bg-blue-900 border border-blue-700 rounded-lg p-4">
+                    <h4 className="font-semibold text-white mb-2">🎯 Personalized Plan</h4>
+                    <p className="text-blue-100 text-sm">
+                      This plan was generated based on your assessment results and personalized recommendations.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center text-gray-400 py-12">
@@ -799,7 +864,7 @@ const MyPlans = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
                 <p className="text-lg">Select a plan to view details</p>
-                <p className="text-sm">Click on any plan from the list to see its content</p>
+                <p className="text-sm">Click on any plan from the list to see its content and start learning</p>
               </div>
             )}
           </div>
