@@ -395,6 +395,81 @@ DEFAULT_ACHIEVEMENTS = [
     }
 ]
 
+def create_assessment_prompt(topic: str, level: str, career_goal: str) -> str:
+    """Create a prompt for generating cybersecurity assessment questions"""
+    
+    topic_description = CYBERSECURITY_TOPICS.get(topic, topic)
+    level_description = SKILL_LEVELS.get(level, level)
+    career_description = CAREER_GOALS.get(career_goal, career_goal)
+    
+    prompt = f"""
+You are an expert cybersecurity instructor creating an assessment to evaluate a learner's current knowledge and skills.
+
+ASSESSMENT REQUIREMENTS:
+- TOPIC: {topic_description}
+- SKILL LEVEL: {level_description}  
+- CAREER GOAL: {career_description}
+- GENERATE: 5-6 diverse questions covering different aspects
+
+Create an assessment with the following structure. Return ONLY valid JSON format:
+
+{{
+    "questions": [
+        {{
+            "id": "unique_id_1",
+            "question_type": "mcq",
+            "question_text": "Question text here",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "correct_answer": "Option A",
+            "explanation": "Brief explanation of why this is correct",
+            "difficulty": "beginner|intermediate|advanced",  
+            "points": 10
+        }},
+        {{
+            "id": "unique_id_2", 
+            "question_type": "practical",
+            "question_text": "Describe a practical scenario question",
+            "options": null,
+            "correct_answer": "Expected answer or approach",
+            "explanation": "What makes a good answer to this practical question",
+            "difficulty": "beginner|intermediate|advanced",
+            "points": 15
+        }},
+        {{
+            "id": "unique_id_3",
+            "question_type": "fill_blank", 
+            "question_text": "A firewall is a _____ security device that monitors and _____ network traffic based on predetermined security _____.",
+            "options": ["network", "controls", "filters"],
+            "correct_answer": "network, controls, filters",
+            "explanation": "Firewalls are network security devices that filter traffic using security rules",
+            "difficulty": "beginner|intermediate|advanced",
+            "points": 10
+        }},
+        {{
+            "id": "unique_id_4",
+            "question_type": "coding",
+            "question_text": "Write a simple Python script to check if a password meets basic security requirements (8+ chars, uppercase, lowercase, number)",
+            "options": null,
+            "correct_answer": "Sample solution with regex or character checks",
+            "explanation": "Good password validation should check multiple criteria",
+            "difficulty": "intermediate",
+            "points": 20
+        }}
+    ]
+}}
+
+QUESTION TYPE GUIDELINES:
+- MCQ: Test theoretical knowledge and concepts
+- Practical: Real-world scenarios and problem-solving
+- Fill_blank: Key terminology and definitions  
+- Coding: Technical implementation skills (when appropriate for topic)
+
+Make questions relevant to {career_description} and appropriate for {level_description} level.
+Ensure questions test different aspects: theory, application, analysis, and synthesis.
+Include questions that help assess their background (student, professional experience, specific interests).
+"""
+    
+    return prompt
 
 async def generate_assessment_with_ollama(prompt: str) -> str:
     """Generate assessment using Ollama API or mock implementation"""
