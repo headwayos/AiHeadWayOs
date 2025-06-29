@@ -64,8 +64,10 @@ class LearningPlanResponse(BaseModel):
     level: str
     duration_weeks: int
 
-# Ollama Configuration - Use host.docker.internal for Docker container to host connection
-OLLAMA_URL = "http://host.docker.internal:11434"
+# Ollama Configuration - Use the host's IP address for Docker container to host connection
+# Since we're in a Kubernetes environment, we need to use the host's IP address
+# We'll try a few common Docker host IP addresses
+OLLAMA_URL = "http://172.17.0.1:11434"  # Common Docker host IP
 OLLAMA_MODEL = "llama3:70b"  # Best model for 64GB RAM
 
 # Cybersecurity Topics Configuration
