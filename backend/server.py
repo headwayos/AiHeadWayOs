@@ -1241,7 +1241,7 @@ async def chat_with_ai(session_id: str, message: str):
     # Save user message
     await db.chat_messages.insert_one(user_message.dict())
     
-    # Generate AI response
+    # Generate AI response using the same mock approach as other AI functions
     ai_prompt = f"""
 You are an expert cybersecurity tutor helping a student learn {plan['topic']}. 
 The student is at {plan['level']} level and currently studying: {session['current_module']}.
@@ -1253,7 +1253,41 @@ Keep responses concise but informative. If the student asks about a specific top
 """
     
     try:
-        ai_response_text = await generate_with_ollama(ai_prompt)
+        if MOCK_OLLAMA:
+            # Mock AI response based on the message content
+            logger.info("Using mock implementation for AI chat response")
+            
+            # Create context-aware mock responses
+            topic = plan['topic'].replace('-', ' ')
+            level = plan['level']
+            
+            # Generate response based on message keywords
+            if any(word in message.lower() for word in ['hello', 'hi', 'start', 'begin']):
+                ai_response_text = f"Hello! I'm excited to help you learn {topic}. Since you're at the {level} level, I'll tailor my explanations accordingly. What specific aspect would you like to explore first?"
+            
+            elif any(word in message.lower() for word in ['what', 'explain', 'how']):
+                ai_response_text = f"Great question! Let me break this down for you:\n\n1. In {topic}, this concept is fundamental because it helps protect systems and data.\n\n2. At the {level} level, you should focus on understanding the basic principles first.\n\n3. Here's a practical example: Think of it like securing your house - you need multiple layers of protection.\n\nWould you like me to go deeper into any of these points?"
+            
+            elif any(word in message.lower() for word in ['example', 'practical', 'real-world']):
+                ai_response_text = f"Absolutely! Here's a real-world example related to {topic}:\n\n🔍 **Scenario**: Imagine you're working at a company and notice unusual network traffic.\n\n📋 **Steps you'd take**:\n1. Document what you observed\n2. Check monitoring tools and logs\n3. Follow incident response procedures\n4. Communicate with your team\n\nThis demonstrates key {topic} principles in action. Want to practice with another scenario?"
+            
+            elif any(word in message.lower() for word in ['help', 'stuck', 'confused', 'difficult']):
+                ai_response_text = f"Don't worry - {topic} can be challenging at first! Let's break it down step by step:\n\n✅ **What you should focus on**:\n- Start with the fundamentals\n- Practice with simple examples\n- Build up to more complex scenarios\n\n💡 **Study tip**: Try to connect new concepts to things you already know. For example, network security is like protecting a building - you need guards, locks, and monitoring systems.\n\nWhat specific part is giving you trouble?"
+            
+            elif any(word in message.lower() for word in ['next', 'continue', 'proceed']):
+                ai_response_text = f"Excellent progress! 🎉 Based on your current understanding of {topic}, here's what I recommend next:\n\n🎯 **Next Learning Goals**:\n1. Practice hands-on exercises\n2. Review real-world case studies\n3. Start working on certification material\n\n📚 **Resources to explore**:\n- Lab environments for {topic}\n- Industry best practices\n- Current threat landscapes\n\nShall we dive into any of these areas?"
+            
+            elif any(word in message.lower() for word in ['quiz', 'test', 'question']):
+                ai_response_text = f"Great idea! Let's test your knowledge of {topic}. Here's a question appropriate for your {level} level:\n\n❓ **Question**: What are the three main components of the CIA triad in cybersecurity?\n\nTake your time to think about it, and then let me know your answer. I'll provide feedback and explain each component in detail.\n\nRemember, this is about learning, not getting everything perfect right away!"
+            
+            else:
+                ai_response_text = f"I understand you're asking about {topic}. Let me help you with that!\n\nAs someone at the {level} level, it's important to approach this systematically:\n\n🔑 **Key concepts to remember**:\n- Security is about confidentiality, integrity, and availability\n- Defense in depth uses multiple security layers\n- Regular monitoring and updates are essential\n\n💬 **Feel free to ask me**:\n- Specific technical questions\n- For practical examples\n- About career advice\n- For study strategies\n\nWhat would be most helpful for you right now?"
+            
+            # Simulate a delay
+            await asyncio.sleep(1)
+        else:
+            # Real implementation using Ollama API (same as before)
+            ai_response_text = await generate_with_ollama(ai_prompt)
         
         # Create AI message
         ai_message = ChatMessage(
@@ -1266,19 +1300,13 @@ Keep responses concise but informative. If the student asks about a specific top
         # Save AI message
         await db.chat_messages.insert_one(ai_message.dict())
         
-        # Update session stats
-        await db.learning_sessions.find_one_and_update(
-            {"id": session_id},
-            {
-                "$inc": {
-                    "ai_interactions": 1,
-                    "questions_asked": 1
-                },
-                "$set": {
-                    "updated_at": datetime.utcnow()
-                }
-            }
-        )
+        # Update session stats - work with in-memory database
+        for i, stored_session in enumerate(in_memory_db["learning_sessions"]):
+            if stored_session.get("id") == session_id:
+                in_memory_db["learning_sessions"][i]["ai_interactions"] = stored_session.get("ai_interactions", 0) + 1
+                in_memory_db["learning_sessions"][i]["questions_asked"] = stored_session.get("questions_asked", 0) + 1
+                in_memory_db["learning_sessions"][i]["updated_at"] = datetime.utcnow()
+                break
         
         return {
             "success": True,
@@ -1288,7 +1316,7 @@ Keep responses concise but informative. If the student asks about a specific top
         
     except Exception as e:
         logger.error(f"Error generating AI response: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to generate AI response")
+        raise HTTPException(status_code=500, detail=f"Failed to generate AI response: {str(e)}")
 
 @api_router.get("/chat-history/{session_id}")
 async def get_chat_history(session_id: str, limit: int = 50):
