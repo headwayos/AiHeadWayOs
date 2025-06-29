@@ -264,14 +264,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Health Check API"
-    - "Topics API"
-    - "Generate Learning Plan API"
-    - "List Learning Plans API"
-    - "Get Specific Learning Plan API"
-    - "Delete Learning Plan API"
-  stuck_tasks: 
-    - "Generate Learning Plan API"
+    - "Initial Page Load"
+    - "Form Functionality"
+    - "AI Plan Generation"
+    - "Plan Management"
+    - "Navigation"
+  stuck_tasks: []
   test_all: true
   test_priority: "high_first"
 
