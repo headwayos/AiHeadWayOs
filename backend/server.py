@@ -58,23 +58,32 @@ class MockCollection:
                     return type('obj', (object,), {'deleted_count': 1})
             return type('obj', (object,), {'deleted_count': 0})
             
-    async def find(self):
+    def find(self):
+        # This is not an async method, it returns self
         return self
-        
-    async def sort(self, field, direction):
+            
+    def sort(self, field, direction):
+        # This is not an async method, it returns self
         return self
-        
-    async def skip(self, n):
+            
+    def skip(self, n):
+        # This is not an async method, it returns self
         return self
-        
-    async def limit(self, n):
+            
+    def limit(self, n):
+        # This is not an async method, it returns self
         return self
-        
+            
     async def to_list(self, length):
-        return in_memory_db["learning_plans"]
-        
+        # This is an async method that returns the actual list
+        if self.collection_name == "learning_plans":
+            return in_memory_db["learning_plans"]
+        return []
+            
     async def count_documents(self, query):
-        return len(in_memory_db["learning_plans"])
+        if self.collection_name == "learning_plans":
+            return len(in_memory_db["learning_plans"])
+        return 0
 
 class MockDB:
     def __init__(self):
