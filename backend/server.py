@@ -1312,26 +1312,29 @@ async def get_chat_history(session_id: str, limit: int = 50):
 async def update_learning_progress(session_id: str, progress_percentage: float, time_spent: int):
     """Update learning progress for a session"""
     
-    # Update session
-    result = await db.learning_sessions.find_one_and_update(
-        {"id": session_id},
-        {
-            "$set": {
-                "progress_percentage": progress_percentage,
-                "time_spent": time_spent,
-                "updated_at": datetime.utcnow()
-            }
+    try:
+        # Find and update the session in in-memory database
+        session_found = False
+        for i, session in enumerate(in_memory_db["learning_sessions"]):
+            if session.get("id") == session_id:
+                in_memory_db["learning_sessions"][i]["progress_percentage"] = progress_percentage
+                in_memory_db["learning_sessions"][i]["time_spent"] = time_spent
+                in_memory_db["learning_sessions"][i]["updated_at"] = datetime.utcnow()
+                session_found = True
+                break
+        
+        if not session_found:
+            raise HTTPException(status_code=404, detail="Learning session not found")
+        
+        return {
+            "success": True,
+            "progress_percentage": progress_percentage,
+            "time_spent": time_spent
         }
-    )
-    
-    if not result:
-        raise HTTPException(status_code=404, detail="Learning session not found")
-    
-    return {
-        "success": True,
-        "progress_percentage": progress_percentage,
-        "time_spent": time_spent
-    }
+        
+    except Exception as e:
+        logger.error(f"Error updating progress: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update progress: {str(e)}")
 
 # Achievement and progress endpoints
 @api_router.get("/achievements")
