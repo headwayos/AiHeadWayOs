@@ -960,7 +960,7 @@ async def generate_with_ollama(prompt: str) -> str:
 # API Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Cybersecurity Learning Plans API", "version": "1.0.0"}
+    return {"message": "Cybersecurity Learning Plans API", "version": "2.0.0"}
 
 @api_router.get("/topics")
 async def get_topics():
@@ -968,8 +968,213 @@ async def get_topics():
     return {
         "topics": CYBERSECURITY_TOPICS,
         "levels": SKILL_LEVELS,
-        "focus_areas": FOCUS_AREAS
+        "focus_areas": FOCUS_AREAS,
+        "career_goals": CAREER_GOALS,
+        "question_types": QUESTION_TYPES
     }
+
+# Assessment endpoints
+@api_router.post("/generate-assessment")
+async def generate_assessment(topic: str, level: str, career_goal: str = "student"):
+    """Generate a personalized cybersecurity assessment"""
+    
+    logger.info(f"Generating assessment for topic: {topic}, level: {level}, career_goal: {career_goal}")
+    
+    # Validate inputs
+    if topic not in CYBERSECURITY_TOPICS:
+        raise HTTPException(status_code=400, detail=f"Invalid topic. Available topics: {list(CYBERSECURITY_TOPICS.keys())}")
+    
+    if level not in SKILL_LEVELS:
+        raise HTTPException(status_code=400, detail=f"Invalid level. Available levels: {list(SKILL_LEVELS.keys())}")
+        
+    if career_goal not in CAREER_GOALS:
+        raise HTTPException(status_code=400, detail=f"Invalid career goal. Available goals: {list(CAREER_GOALS.keys())}")
+    
+    # Generate assessment using AI
+    prompt = create_assessment_prompt(topic, level, career_goal)
+    assessment_json = await generate_assessment_with_ollama(prompt)
+    
+    try:
+        # Parse the generated assessment
+        assessment_data = json.loads(assessment_json)
+        
+        # Create assessment questions
+        questions = []
+        total_points = 0
+        
+        for q_data in assessment_data["questions"]:
+            question = AssessmentQuestion(
+                id=q_data.get("id", str(uuid.uuid4())),
+                question_type=q_data["question_type"],
+                question_text=q_data["question_text"],
+                options=q_data.get("options"),
+                correct_answer=q_data["correct_answer"],
+                explanation=q_data.get("explanation"),
+                difficulty=q_data.get("difficulty", level),
+                points=q_data.get("points", 10)
+            )
+            questions.append(question)
+            total_points += question.points
+        
+        # Create assessment
+        assessment = Assessment(
+            topic=topic,
+            level=level,
+            questions=questions,
+            total_points=total_points
+        )
+        
+        # Save assessment
+        assessment_dict = assessment.dict()
+        await db.assessments.insert_one(assessment_dict)
+        
+        logger.info(f"Assessment created with ID: {assessment.id}")
+        
+        return {
+            "success": True,
+            "assessment_id": assessment.id,
+            "topic": topic,
+            "level": level,
+            "career_goal": career_goal,
+            "total_questions": len(questions),
+            "total_points": total_points,
+            "questions": [
+                {
+                    "id": q.id,
+                    "question_type": q.question_type,
+                    "question_text": q.question_text,
+                    "options": q.options,
+                    "difficulty": q.difficulty,
+                    "points": q.points
+                } for q in questions
+            ]
+        }
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse assessment JSON: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to parse generated assessment")
+    except Exception as e:
+        logger.error(f"Error creating assessment: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create assessment")
+
+@api_router.post("/submit-assessment")
+async def submit_assessment(submission: AssessmentSubmission):
+    """Submit assessment responses and get results"""
+    
+    logger.info(f"Processing assessment submission for assessment: {submission.assessment_id}")
+    
+    # Get the assessment
+    assessment = await db.assessments.find_one({"id": submission.assessment_id})
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+    
+    # Calculate score
+    total_score = 0
+    total_points = 0
+    correct_answers = 0
+    
+    # Create a mapping of question_id to question for easy lookup
+    question_map = {q["id"]: q for q in assessment["questions"]}
+    
+    for response in submission.responses:
+        question = question_map.get(response.question_id)
+        if question:
+            total_points += question["points"]
+            
+            # Check if answer is correct (basic string matching for now)
+            if question["question_type"] == "mcq":
+                if response.answer.strip().lower() == question["correct_answer"].strip().lower():
+                    total_score += question["points"]
+                    correct_answers += 1
+            elif question["question_type"] == "fill_blank":
+                # For fill-in-the-blank, check if key terms are present
+                correct_terms = question["correct_answer"].lower().split(", ")
+                user_terms = response.answer.lower().split(", ")
+                if len(set(correct_terms).intersection(set(user_terms))) >= len(correct_terms) * 0.7:
+                    total_score += question["points"]
+                    correct_answers += 1
+            else:
+                # For practical and coding questions, give partial credit (this could be enhanced with AI evaluation)
+                if len(response.answer.strip()) > 20:  # Basic check for substantial answer
+                    total_score += question["points"] * 0.7  # 70% credit for attempting
+                    if len(response.answer.strip()) > 100:
+                        total_score += question["points"] * 0.3  # Additional credit for detailed answer
+                        correct_answers += 1
+    
+    # Calculate percentage and determine skill level
+    percentage = (total_score / total_points * 100) if total_points > 0 else 0
+    
+    # Determine skill level based on performance
+    if percentage >= 80:
+        determined_level = "advanced" if assessment["level"] == "intermediate" else assessment["level"]
+    elif percentage >= 60:
+        determined_level = assessment["level"]
+    else:
+        skill_levels_order = ["beginner", "intermediate", "advanced", "expert"]
+        current_index = skill_levels_order.index(assessment["level"])
+        determined_level = skill_levels_order[max(0, current_index - 1)]
+    
+    # Generate recommendations
+    recommendations = []
+    if percentage < 50:
+        recommendations.append("Focus on fundamental concepts and terminology")
+        recommendations.append("Start with beginner-level resources and tutorials")
+    elif percentage < 70:
+        recommendations.append("Review core concepts before advancing")
+        recommendations.append("Practice more hands-on exercises")
+    else:
+        recommendations.append("You're ready for advanced topics in this domain")
+        recommendations.append("Consider pursuing relevant certifications")
+    
+    # Add career-specific recommendations
+    if submission.career_goal == "faang_prep":
+        recommendations.append("Focus on system design and scalability concepts")
+        recommendations.append("Practice coding challenges related to security")
+    elif submission.career_goal == "career_switcher":
+        recommendations.append("Build a portfolio of security projects")
+        recommendations.append("Consider entry-level certifications like Security+")
+    
+    # Create assessment result
+    result = AssessmentResult(
+        assessment_id=submission.assessment_id,
+        submission=submission,
+        score=int(total_score),
+        total_points=total_points,
+        percentage=round(percentage, 2),
+        skill_level=determined_level,
+        recommendations=recommendations
+    )
+    
+    # Save result
+    result_dict = result.dict()
+    await db.assessment_results.insert_one(result_dict)
+    
+    logger.info(f"Assessment result saved with ID: {result.id}")
+    
+    return {
+        "success": True,
+        "result_id": result.id,
+        "score": int(total_score),
+        "total_points": total_points,
+        "percentage": round(percentage, 2),
+        "correct_answers": correct_answers,
+        "total_questions": len(submission.responses),
+        "skill_level": determined_level,
+        "recommendations": recommendations,
+        "career_goal": submission.career_goal
+    }
+
+@api_router.get("/assessment-result/{result_id}")
+async def get_assessment_result(result_id: str):
+    """Get assessment result by ID"""
+    result = await db.assessment_results.find_one({"id": result_id})
+    if not result:
+        raise HTTPException(status_code=404, detail="Assessment result not found")
+    
+    # Remove MongoDB _id if present
+    if "_id" in result:
+        result.pop("_id", None)
+    return result
 
 @api_router.post("/generate-learning-plan", response_model=LearningPlanResponse)
 async def generate_learning_plan(request: LearningPlanRequest):
