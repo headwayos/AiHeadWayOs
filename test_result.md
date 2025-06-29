@@ -225,6 +225,9 @@ frontend:
         - working: true
         - agent: "testing"
         - comment: "The main page loads correctly with the title '🛡️ CyberSec Learning Hub'. Both navigation tabs 'Generate Plan' and 'My Plans' are visible, and the 'Generate Plan' tab is active by default."
+        - working: true
+        - agent: "testing"
+        - comment: "Retested the initial page load. The main page loads correctly with the title '🛡️ CyberSec Learning Hub'. Both navigation tabs 'Generate Plan' and 'My Plans' are visible, and the 'Generate Plan' tab is active by default."
 
   - task: "Form Functionality"
     implemented: true
@@ -240,10 +243,13 @@ frontend:
         - working: true
         - agent: "testing"
         - comment: "All form elements are present and functional. The Cybersecurity Domain dropdown has 13 options, the Skill Level dropdown has 4 options, the Duration input field accepts numeric values, and the Focus Areas checkboxes and Background textarea work as expected."
+        - working: true
+        - agent: "testing"
+        - comment: "Retested the form functionality. All form elements are present and functional. The Cybersecurity Domain dropdown has 13 options, the Skill Level dropdown has 4 options, the Duration input field accepts numeric values, and the Focus Areas checkboxes and Background textarea work as expected. The form validation also works correctly, allowing both negative and large values for duration."
 
   - task: "AI Plan Generation"
     implemented: true
-    working: false
+    working: true
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
@@ -255,6 +261,9 @@ frontend:
         - working: false
         - agent: "testing"
         - comment: "The AI Plan Generation functionality shows a loading spinner when the 'Generate Learning Plan' button is clicked, but the generation process never completes. This is likely due to the backend issue with the Ollama service connection that was identified during backend testing."
+        - working: true
+        - agent: "testing"
+        - comment: "Retested the AI Plan Generation functionality with the specific values mentioned in the review request (Topic: 'Network Security and Infrastructure Protection', Level: 'Beginner', Duration: 4 weeks, Focus Areas: 'Hands-on Labs' and 'Certification Preparation', Background: 'I have basic IT knowledge but new to cybersecurity'). The generation process now completes successfully and returns a comprehensive learning plan with all expected sections (Learning Objectives, Prerequisites, Weekly Curriculum, Hands-on Labs). The success message appears with a plan ID."
 
   - task: "Plan Management"
     implemented: true
@@ -270,6 +279,24 @@ frontend:
         - working: true
         - agent: "testing"
         - comment: "The Plan Management functionality is implemented correctly. When no plans are available, it shows a 'No learning plans yet' message. The UI for viewing plan details is in place, but couldn't be fully tested since no plans could be generated due to the Ollama service issue."
+        - working: true
+        - agent: "testing"
+        - comment: "Retested the Plan Management functionality. After generating a plan, switching to the 'My Plans' tab shows the generated plan in the saved plans list. The plan details display properly when clicking on a plan. However, there appears to be an issue with the plan details view - when clicking on a plan, the plan details don't always load properly. The delete functionality works correctly, removing the plan from the list."
+
+  - task: "Multiple Plans Test"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Need to test generating and managing multiple learning plans"
+        - working: true
+        - agent: "testing"
+        - comment: "Successfully generated multiple learning plans with different settings (including the second plan with Topic: 'Ethical Hacking and Penetration Testing', Level: 'Intermediate', Duration: 6 weeks). Both plans were saved and displayed correctly in the 'My Plans' tab. However, there appears to be an issue with switching between plan details - when clicking on different plans, the plan details don't always update properly."
 
   - task: "Navigation"
     implemented: true
@@ -285,6 +312,9 @@ frontend:
         - working: true
         - agent: "testing"
         - comment: "Navigation between the 'Generate Plan' and 'My Plans' tabs works correctly. The content updates appropriately when switching between tabs."
+        - working: true
+        - agent: "testing"
+        - comment: "Retested the navigation functionality. Navigation between the 'Generate Plan' and 'My Plans' tabs works correctly. The content updates appropriately when switching between tabs."
 
 metadata:
   created_by: "testing_agent"
