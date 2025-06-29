@@ -395,6 +395,139 @@ DEFAULT_ACHIEVEMENTS = [
     }
 ]
 
+
+async def generate_assessment_with_ollama(prompt: str) -> str:
+    """Generate assessment using Ollama API or mock implementation"""
+    if MOCK_OLLAMA:
+        # Mock implementation for testing - return sample assessment
+        logger.info("Using mock implementation for assessment generation")
+        
+        # Generate a mock assessment based on the prompt
+        topic = "network-security"  # default
+        level = "beginner"  # default
+        
+        # Extract topic and level from prompt if possible
+        if "TOPIC:" in prompt:
+            topic_line = prompt.split("TOPIC:")[1].split("\n")[0].strip()
+            # Find matching topic key
+            for key, value in CYBERSECURITY_TOPICS.items():
+                if value in topic_line:
+                    topic = key
+                    break
+        
+        if "SKILL LEVEL:" in prompt:
+            level_line = prompt.split("SKILL LEVEL:")[1].split("\n")[0].strip()
+            for key, value in SKILL_LEVELS.items():
+                if value in level_line:
+                    level = key
+                    break
+        
+        # Generate mock assessment
+        mock_assessment = {
+            "questions": [
+                {
+                    "id": str(uuid.uuid4()),
+                    "question_type": "mcq",
+                    "question_text": f"What is the primary purpose of a firewall in {topic.replace('-', ' ')} infrastructure?",
+                    "options": [
+                        "To block all network traffic",
+                        "To monitor and control network traffic based on security rules", 
+                        "To encrypt all data transmissions",
+                        "To provide user authentication"
+                    ],
+                    "correct_answer": "To monitor and control network traffic based on security rules",
+                    "explanation": "Firewalls are network security devices that monitor incoming and outgoing network traffic and permit or block data packets based on a set of security rules.",
+                    "difficulty": level,
+                    "points": 10
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "question_type": "practical", 
+                    "question_text": "You notice unusual network traffic patterns in your organization. Describe the first three steps you would take to investigate this potential security incident.",
+                    "options": None,
+                    "correct_answer": "1. Document the observation with timestamps 2. Check network monitoring tools and logs 3. Isolate affected systems if necessary and notify incident response team",
+                    "explanation": "Proper incident response involves documentation, investigation using available tools, and following established procedures to contain potential threats.",
+                    "difficulty": level,
+                    "points": 15
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "question_type": "fill_blank",
+                    "question_text": "The CIA triad in cybersecurity stands for _____, _____, and _____.",
+                    "options": ["Confidentiality", "Integrity", "Availability"],
+                    "correct_answer": "Confidentiality, Integrity, Availability", 
+                    "explanation": "The CIA triad is a fundamental security model that ensures data confidentiality, integrity, and availability.",
+                    "difficulty": level,
+                    "points": 10
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "question_type": "mcq",
+                    "question_text": "Which of the following is NOT a common type of social engineering attack?",
+                    "options": [
+                        "Phishing",
+                        "Pretexting", 
+                        "DDoS Attack",
+                        "Baiting"
+                    ],
+                    "correct_answer": "DDoS Attack",
+                    "explanation": "DDoS (Distributed Denial of Service) is a technical attack, not a social engineering attack which manipulates people rather than technology.",
+                    "difficulty": level,
+                    "points": 10
+                },
+                {
+                    "id": str(uuid.uuid4()),
+                    "question_type": "practical",
+                    "question_text": "What career path interests you most in cybersecurity, and what specific skills do you want to develop? (This helps us personalize your learning plan)",
+                    "options": None,
+                    "correct_answer": "Personal response about career interests and skill goals",
+                    "explanation": "Understanding your career goals helps create a more targeted and relevant learning experience tailored to your specific objectives.",
+                    "difficulty": level,
+                    "points": 5
+                }
+            ]
+        }
+        
+        # Simulate a delay to mimic the generation process
+        await asyncio.sleep(2)
+        
+        return json.dumps(mock_assessment)
+    else:
+        # Real implementation using Ollama API
+        try:
+            working_host = get_working_ollama_host()
+            global OLLAMA_URL
+            if working_host:
+                OLLAMA_URL = working_host
+            
+            response = requests.post(
+                f"{OLLAMA_URL}/api/generate",
+                json={
+                    "model": OLLAMA_MODEL,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.7,
+                        "top_p": 0.9,
+                        "max_tokens": 4096
+                    }
+                },
+                timeout=180  # 3 minutes timeout
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Ollama API error: {response.status_code} - {response.text}")
+                raise HTTPException(status_code=500, detail=f"Assessment generation failed: {response.text}")
+            
+            result = response.json()
+            return result.get("response", "")
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Ollama connection error: {str(e)}")
+            raise HTTPException(status_code=503, detail=f"Could not connect to Ollama service: {str(e)}")
+        except Exception as e:
+            logger.error(f"Unexpected error during assessment generation: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Assessment generation error: {str(e)}")
 def create_comprehensive_prompt(request: LearningPlanRequest) -> str:
     """Create a comprehensive prompt for generating cybersecurity learning plans"""
     
