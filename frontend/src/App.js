@@ -151,16 +151,13 @@ function App() {
         )}
         {activeTab === 'plans' && (
           <MyPlans 
-            onStartLearning={(planId) => {
-              setActiveTab('learning');
-              setActiveTab('learning-' + planId);
-            }}
+            onStartLearning={handleStartLearning}
             onBack={handleBackToDashboard}
           />
         )}
-        {activeTab.startsWith('learning-') && (
+        {activeTab === 'learning' && currentPlanId && (
           <LearningSession 
-            planId={activeTab.split('-')[1]}
+            planId={currentPlanId}
             onBack={handleBackToDashboard}
           />
         )}
