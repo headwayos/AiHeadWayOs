@@ -65,8 +65,8 @@ class LearningPlanResponse(BaseModel):
     duration_weeks: int
 
 # Ollama Configuration
-OLLAMA_URL = "http://localhost:11434"
-OLLAMA_MODEL = "llama3:70b"  # Best model for 64GB RAM
+OLLAMA_URL = "http://ai.nosnia.ai:11434"
+OLLAMA_MODEL = "llama3.1"  # Best model for 64GB RAM
 
 # Cybersecurity Topics Configuration
 CYBERSECURITY_TOPICS = {
