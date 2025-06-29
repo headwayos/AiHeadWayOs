@@ -408,10 +408,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "AI Plan Generation"
-    - "Plan Management"
-    - "Multiple Plans Test"
-  stuck_tasks: []
+    - "Plan Approval API"
+    - "Learning Session Management APIs"
+    - "AI Chat Functionality"
+  stuck_tasks:
+    - "Plan Approval API"
+    - "Learning Session Management APIs"
+    - "AI Chat Functionality"
   test_all: false
   test_priority: "high_first"
 
