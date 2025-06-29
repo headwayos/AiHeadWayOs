@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Test the cybersecurity learning plans backend API that I just built. Here are the key endpoints to test: 1. Health Check: GET /api/health - Should check Ollama connection and database connectivity 2. Topics: GET /api/topics - Should return available cybersecurity topics, skill levels, and focus areas 3. Generate Learning Plan: POST /api/generate-learning-plan - This is the main feature that generates AI-powered cybersecurity learning plans using local Ollama 4. List Plans: GET /api/learning-plans - Should return saved learning plans 5. Get Specific Plan: GET /api/learning-plans/{plan_id} - Should retrieve a specific plan"
+user_problem_statement: "This github repo has Learning plan generated and now update it's version where AI teaches with personalised assessment and 1:1 monitored teaching, basically all UI alike PREPLACED's PROPILOT-LEECO. AI should be able Assess Generate a plan and get it approved from learner and then they should start learning..."
 
 backend:
   - task: "Health Check API"
