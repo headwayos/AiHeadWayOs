@@ -53,6 +53,12 @@ function App() {
   const handleBackToDashboard = () => {
     setActiveTab('dashboard');
     setAssessmentResult(null);
+    setCurrentPlanId(null);
+  };
+
+  const handleStartLearning = (planId) => {
+    setCurrentPlanId(planId);
+    setActiveTab('learning');
   };
 
   return (
