@@ -64,11 +64,30 @@ class LearningPlanResponse(BaseModel):
     level: str
     duration_weeks: int
 
-# Ollama Configuration - Use the host's IP address for Docker container to host connection
-# Since we're in a Kubernetes environment, we need to use the host's IP address
-# We'll try a few common Docker host IP addresses
-OLLAMA_URL = "http://172.17.0.1:11434"  # Common Docker host IP
+# Ollama Configuration - Try multiple possible host addresses
+# Since we're in a Kubernetes environment, we need to find the right host address
+# We'll try multiple common Docker host IP addresses in sequence
+OLLAMA_HOSTS = [
+    "http://host.docker.internal:11434",  # Docker Desktop for Mac/Windows
+    "http://172.17.0.1:11434",           # Common Docker bridge network gateway
+    "http://172.18.0.1:11434",           # Alternative Docker bridge network
+    "http://192.168.65.2:11434",         # Docker Desktop for Mac
+    "http://10.0.75.1:11434",            # Docker Desktop for Windows
+    "http://localhost:11434"             # Local machine (unlikely to work in container)
+]
+OLLAMA_URL = OLLAMA_HOSTS[0]  # Default to first option
 OLLAMA_MODEL = "llama3:70b"  # Best model for 64GB RAM
+
+def get_working_ollama_host():
+    """Try to find a working Ollama host from the list of possible hosts"""
+    for host in OLLAMA_HOSTS:
+        try:
+            response = requests.get(f"{host}/api/tags", timeout=2)
+            if response.status_code == 200:
+                return host
+        except:
+            continue
+    return OLLAMA_HOSTS[0]  # Default to first option if none work
 
 # Cybersecurity Topics Configuration
 CYBERSECURITY_TOPICS = {
