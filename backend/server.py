@@ -983,8 +983,8 @@ async def generate_learning_plan(request: LearningPlanRequest):
     if request.level not in SKILL_LEVELS:
         raise HTTPException(status_code=400, detail=f"Invalid level. Available levels: {list(SKILL_LEVELS.keys())}")
     
-    # Create comprehensive prompt
-    prompt = create_comprehensive_prompt(request)
+    # Create assessment prompt
+    prompt = create_assessment_prompt(request.topic, request.level, request.career_goal)
     
     # Generate content using Ollama
     curriculum = await generate_with_ollama(prompt)
