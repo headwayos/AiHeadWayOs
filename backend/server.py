@@ -604,6 +604,154 @@ async def generate_assessment_with_ollama(prompt: str) -> str:
             logger.error(f"Unexpected error during assessment generation: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Assessment generation error: {str(e)}")
 
+def create_comprehensive_prompt(request: LearningPlanRequest) -> str:
+    """Create a comprehensive prompt for generating cybersecurity learning plans"""
+    
+    topic_description = CYBERSECURITY_TOPICS.get(request.topic, request.topic)
+    level_description = SKILL_LEVELS.get(request.level, request.level)
+    focus_areas_text = ", ".join(request.focus_areas) if request.focus_areas else "General comprehensive coverage"
+    
+    prompt = f"""
+You are an expert cybersecurity instructor and curriculum designer. Create a comprehensive, structured learning plan for:
+
+TOPIC: {topic_description}
+SKILL LEVEL: {level_description}
+DURATION: {request.duration_weeks} weeks
+FOCUS AREAS: {focus_areas_text}
+USER BACKGROUND: {request.user_background or "Not specified"}
+
+Create a detailed learning plan with the following structure:
+
+## 🎯 LEARNING OBJECTIVES
+List 6-8 specific, measurable learning objectives that align with industry standards and real-world application.
+
+## 📋 PREREQUISITES
+- Required foundational knowledge
+- Recommended prior experience
+- Essential tools and software to install
+- Hardware requirements (if any)
+
+## 📅 WEEKLY CURRICULUM BREAKDOWN
+
+### Week 1-2: Foundation & Fundamentals
+- Core concepts and terminology
+- Industry standards and frameworks
+- Basic tools introduction
+- Foundational theory
+
+### Week 3-4: Core Concepts & Methodologies
+- In-depth technical concepts
+- Standard methodologies and approaches
+- Tool mastery and configuration
+- Best practices
+
+### Week 5-6: Advanced Techniques & Applications
+- Advanced topics and techniques
+- Complex scenarios and case studies
+- Integration with other security domains
+- Emerging trends and threats
+
+### Week 7-8: Practical Implementation & Mastery
+- Capstone projects and assessments
+- Real-world application scenarios
+- Portfolio development
+- Career preparation
+
+## 🔬 HANDS-ON LABS & PRACTICAL EXERCISES
+Provide detailed lab exercises with:
+- Lab objectives and learning outcomes
+- Required tools and environment setup
+- Step-by-step procedures
+- Expected results and deliverables
+- Troubleshooting guides
+
+Include at least 8-10 progressive labs covering:
+1. Basic setup and configuration
+2. Vulnerability identification
+3. Exploitation techniques (ethical)
+4. Defense and mitigation strategies
+5. Monitoring and detection
+6. Incident response procedures
+7. Reporting and documentation
+8. Advanced scenarios and challenges
+
+## 📚 COMPREHENSIVE RESOURCE LIBRARY
+
+### Books & Publications
+- Essential textbooks (with ISBN when possible)
+- Industry whitepapers and research
+- Technical documentation
+- Standards and compliance guides
+
+### Online Courses & Training
+- Recommended platforms (Coursera, Udemy, Cybrary, etc.)
+- Specific course recommendations
+- Free vs. paid options
+- Estimated completion times
+
+### Tools & Software
+- Open-source tools with installation guides
+- Commercial tools and alternatives
+- Virtual lab environments
+- Cloud-based platforms
+
+### Community Resources
+- Professional forums and communities
+- Conferences and events
+- Podcasts and webinars
+- Social media groups and influencers
+
+## 🏆 CERTIFICATION PATHWAYS
+- Primary certifications aligned with this learning path
+- Prerequisite requirements
+- Exam preparation timeline
+- Study materials and practice tests
+- Costs and scheduling information
+- Career advancement opportunities
+
+## 📊 ASSESSMENT & EVALUATION METHODS
+- Knowledge check quizzes (weekly)
+- Practical skill assessments
+- Portfolio projects
+- Peer review exercises
+- Self-assessment rubrics
+- Final capstone project
+
+## ⏱️ TIME ALLOCATION & STUDY SCHEDULE
+- Hours per week breakdown
+- Daily study recommendations
+- Lab time requirements
+- Review and practice sessions
+- Flexibility for working professionals
+
+## 🚀 CAREER DEVELOPMENT & NEXT STEPS
+- Job roles this learning path prepares for
+- Salary expectations and market demand
+- Portfolio development guidance
+- Interview preparation tips
+- Networking opportunities
+- Continuing education recommendations
+
+## 🔄 CONTINUOUS LEARNING & UPDATES
+- Industry trend monitoring
+- Skill gap identification
+- Advanced specialization paths
+- Professional development planning
+- Mentorship opportunities
+
+## 💡 PRACTICAL TIPS FOR SUCCESS
+- Study strategies and techniques
+- Time management advice
+- Motivation and goal setting
+- Common pitfalls to avoid
+- Building practical experience
+- Creating a professional network
+
+Please ensure all recommendations are current, practical, and aligned with industry best practices as of 2025. Focus on actionable content that learners can immediately apply.
+"""
+    
+    return prompt
+
 
 # For testing purposes, we'll use a mock implementation of the Ollama API
 # This will allow us to test the API without actually connecting to Ollama
