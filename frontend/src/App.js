@@ -322,18 +322,32 @@ const Dashboard = ({ userProgress, onStartAssessment, onGeneratePlan, onViewPlan
 };
 
 // Generate Plan Component
-const GeneratePlan = ({ topics, levels, focusAreas }) => {
+const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack }) => {
   const [formData, setFormData] = useState({
     topic: 'network-security',
     level: 'beginner',
     duration_weeks: 8,
     focus_areas: [],
-    user_background: ''
+    user_background: '',
+    assessment_result_id: null
   });
   
   const [generatedPlan, setGeneratedPlan] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [planApproved, setPlanApproved] = useState(false);
+
+  // Update form data when assessment result is available
+  useEffect(() => {
+    if (assessmentResult) {
+      setFormData(prev => ({
+        ...prev,
+        level: assessmentResult.skill_level,
+        assessment_result_id: assessmentResult.result_id,
+        user_background: `Based on assessment: ${assessmentResult.percentage}% score, ${assessmentResult.recommendations.join(', ')}`
+      }));
+    }
+  }, [assessmentResult]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -356,6 +370,7 @@ const GeneratePlan = ({ topics, levels, focusAreas }) => {
     setLoading(true);
     setError(null);
     setGeneratedPlan(null);
+    setPlanApproved(false);
     
     try {
       const response = await axios.post(`${API}/generate-learning-plan`, formData);
@@ -367,14 +382,64 @@ const GeneratePlan = ({ topics, levels, focusAreas }) => {
     }
   };
 
+  const approvePlan = async (approved) => {
+    if (!generatedPlan) return;
+    
+    try {
+      await axios.post(`${API}/approve-learning-plan/${generatedPlan.plan_id}?approved=${approved}`);
+      setPlanApproved(approved);
+      if (approved) {
+        // Award achievement
+        try {
+          await axios.post(`${API}/award-achievement?user_id=anonymous&achievement_id=plan_approved`);
+        } catch (e) {
+          // Ignore if already awarded
+        }
+      }
+    } catch (error) {
+      console.error('Error approving plan:', error);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
+      {/* Assessment Result Banner */}
+      {assessmentResult && (
+        <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl p-6 mb-8 shadow-2xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                🎯 Assessment Complete!
+              </h3>
+              <p className="text-white opacity-90">
+                Score: {assessmentResult.percentage}% • Recommended Level: {assessmentResult.skill_level}
+              </p>
+            </div>
+            <div className="text-4xl">
+              {assessmentResult.percentage >= 80 ? '🏆' : assessmentResult.percentage >= 60 ? '👍' : '📚'}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Form Section */}
         <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl">
-          <h2 className="text-3xl font-bold text-white mb-6">
-            Create Your Learning Plan
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-white">
+              Create Your Learning Plan
+            </h2>
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+          </div>
           
           <div className="space-y-6">
             {/* Topic Selection */}
@@ -399,7 +464,7 @@ const GeneratePlan = ({ topics, levels, focusAreas }) => {
             {/* Level Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Skill Level
+                Skill Level {assessmentResult && <span className="text-green-400">(From Assessment)</span>}
               </label>
               <select
                 name="level"
@@ -454,7 +519,7 @@ const GeneratePlan = ({ topics, levels, focusAreas }) => {
             {/* Background */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Your Background (Optional)
+                Your Background {assessmentResult && <span className="text-green-400">(Enhanced with Assessment)</span>}
               </label>
               <textarea
                 name="user_background"
@@ -475,7 +540,7 @@ const GeneratePlan = ({ topics, levels, focusAreas }) => {
               {loading ? (
                 <div className="flex items-center justify-center">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
-                  Generating Plan...
+                  Generating Personalized Plan...
                 </div>
               ) : (
                 'Generate Learning Plan'
@@ -525,6 +590,44 @@ const GeneratePlan = ({ topics, levels, focusAreas }) => {
                   </pre>
                 </div>
               </div>
+
+              {/* Plan Approval Section */}
+              <div className="bg-blue-900 border border-blue-700 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-white mb-4">
+                  📋 Plan Approval
+                </h4>
+                <p className="text-blue-100 mb-4">
+                  Review your personalized learning plan and approve it to start learning with AI guidance.
+                </p>
+                
+                {!planApproved ? (
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => approvePlan(true)}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                    >
+                      ✅ Approve & Start Learning
+                    </button>
+                    <button
+                      onClick={() => approvePlan(false)}
+                      className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      ❌ Reject
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <div className="text-green-400 text-xl font-bold mb-2">✅ Plan Approved!</div>
+                    <p className="text-green-100 mb-4">You can now start learning with AI guidance.</p>
+                    <button
+                      onClick={() => window.location.reload()} // This will navigate to learning session
+                      className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                    >
+                      🚀 Start Learning Session
+                    </button>
+                  </div>
+                )}
+              </div>
               
               <div className="text-sm text-gray-400">
                 Plan ID: {generatedPlan.plan_id}
@@ -536,7 +639,12 @@ const GeneratePlan = ({ topics, levels, focusAreas }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="text-lg">Your generated learning plan will appear here</p>
-              <p className="text-sm">Fill out the form and click "Generate Learning Plan" to get started</p>
+              <p className="text-sm">
+                {assessmentResult 
+                  ? 'Generate a plan based on your assessment results'
+                  : 'Fill out the form and click "Generate Learning Plan" to get started'
+                }
+              </p>
             </div>
           )}
         </div>
