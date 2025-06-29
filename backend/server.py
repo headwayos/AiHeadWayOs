@@ -1385,35 +1385,57 @@ async def award_achievement(user_id: str, achievement_id: str):
     if not achievement:
         raise HTTPException(status_code=404, detail="Achievement not found")
     
-    # Get or create user progress
-    progress = await db.user_progress.find_one({"user_id": user_id})
-    if not progress:
-        progress = UserProgress(user_id=user_id)
-        await db.user_progress.insert_one(progress.dict())
-        progress = progress.dict()
-    
-    # Check if user already has this achievement
-    if achievement_id in progress.get("achievements", []):
+    try:
+        # Get or create user progress
+        progress = None
+        progress_index = -1
+        
+        # Find existing progress
+        for i, prog in enumerate(in_memory_db["user_progress"]):
+            if prog.get("user_id") == user_id:
+                progress = prog
+                progress_index = i
+                break
+        
+        # Create new progress if not found
+        if not progress:
+            progress = {
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "total_points": 0,
+                "achievements": [],
+                "skill_levels": {},
+                "learning_streak": 0,
+                "total_time_spent": 0,
+                "assessments_completed": 0,
+                "plans_completed": 0,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+            in_memory_db["user_progress"].append(progress)
+            progress_index = len(in_memory_db["user_progress"]) - 1
+        
+        # Check if user already has this achievement
+        if achievement_id in progress.get("achievements", []):
+            return {
+                "success": False,
+                "message": "User already has this achievement"
+            }
+        
+        # Award achievement
+        in_memory_db["user_progress"][progress_index]["achievements"].append(achievement_id)
+        in_memory_db["user_progress"][progress_index]["total_points"] += achievement["points"]
+        in_memory_db["user_progress"][progress_index]["updated_at"] = datetime.utcnow()
+        
         return {
-            "success": False,
-            "message": "User already has this achievement"
+            "success": True,
+            "achievement": achievement,
+            "points_awarded": achievement["points"]
         }
-    
-    # Award achievement
-    await db.user_progress.find_one_and_update(
-        {"user_id": user_id},
-        {
-            "$push": {"achievements": achievement_id},
-            "$inc": {"total_points": achievement["points"]},
-            "$set": {"updated_at": datetime.utcnow()}
-        }
-    )
-    
-    return {
-        "success": True,
-        "achievement": achievement,
-        "points_awarded": achievement["points"]
-    }
+        
+    except Exception as e:
+        logger.error(f"Error awarding achievement: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to award achievement: {str(e)}")
 
 @api_router.post("/approve-learning-plan/{plan_id}")
 async def approve_learning_plan(plan_id: str, approved: bool = True):
