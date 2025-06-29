@@ -279,13 +279,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Initial Page Load"
-    - "Form Functionality"
     - "AI Plan Generation"
-    - "Plan Management"
-    - "Navigation"
-  stuck_tasks: []
-  test_all: true
+  stuck_tasks: 
+    - "AI Plan Generation"
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
