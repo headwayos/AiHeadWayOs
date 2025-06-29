@@ -46,21 +46,35 @@ class MockCollection:
         if query is None:
             return None
             
-        if self.collection_name == "learning_plans":
-            for plan in in_memory_db["learning_plans"]:
-                if query.get("id") and plan.get("id") == query.get("id"):
-                    return plan
+        collection_data = in_memory_db.get(self.collection_name, [])
+        for item in collection_data:
+            if query.get("id") and item.get("id") == query.get("id"):
+                return item
+            # Support other query fields
+            match = True
+            for key, value in query.items():
+                if key in item and item[key] != value:
+                    match = False
+                    break
+            if match:
+                return item
         return None
         
     async def insert_one(self, document):
-        if self.collection_name == "learning_plans":
-            in_memory_db["learning_plans"].append(document)
+        if self.collection_name in in_memory_db:
+            in_memory_db[self.collection_name].append(document)
             
     async def delete_one(self, query):
-        if self.collection_name == "learning_plans":
-            for i, plan in enumerate(in_memory_db["learning_plans"]):
-                if query.get("id") and plan.get("id") == query.get("id"):
-                    del in_memory_db["learning_plans"][i]
+        if self.collection_name in in_memory_db:
+            collection_data = in_memory_db[self.collection_name]
+            for i, item in enumerate(collection_data):
+                match = True
+                for key, value in query.items():
+                    if key in item and item[key] != value:
+                        match = False
+                        break
+                if match:
+                    del collection_data[i]
                     return type('obj', (object,), {'deleted_count': 1})
             return type('obj', (object,), {'deleted_count': 0})
             
