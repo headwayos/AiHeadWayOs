@@ -1416,31 +1416,35 @@ async def award_achievement(user_id: str, achievement_id: str):
 async def approve_learning_plan(plan_id: str, approved: bool = True):
     """Approve or reject a learning plan"""
     
-    result = await db.learning_plans.find_one_and_update(
-        {"id": plan_id},
-        {
-            "$set": {
-                "approved": approved,
-                "updated_at": datetime.utcnow()
-            }
+    # Find and update the plan
+    try:
+        plan = await db.learning_plans.find_one({"id": plan_id})
+        if not plan:
+            raise HTTPException(status_code=404, detail="Learning plan not found")
+        
+        # Update the plan - note: this is a simplified update for in-memory database
+        for i, stored_plan in enumerate(in_memory_db["learning_plans"]):
+            if stored_plan.get("id") == plan_id:
+                in_memory_db["learning_plans"][i]["approved"] = approved
+                in_memory_db["learning_plans"][i]["updated_at"] = datetime.utcnow()
+                break
+        
+        # Award achievement for first approved plan
+        if approved:
+            try:
+                await award_achievement("anonymous", "plan_approved")
+            except:
+                pass  # Ignore if already awarded
+        
+        return {
+            "success": True,
+            "plan_id": plan_id,
+            "approved": approved
         }
-    )
-    
-    if not result:
-        raise HTTPException(status_code=404, detail="Learning plan not found")
-    
-    # Award achievement for first approved plan
-    if approved:
-        try:
-            await award_achievement("anonymous", "plan_approved")
-        except:
-            pass  # Ignore if already awarded
-    
-    return {
-        "success": True,
-        "plan_id": plan_id,
-        "approved": approved
-    }
+        
+    except Exception as e:
+        logger.error(f"Error approving plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to approve plan: {str(e)}")
 
 @api_router.post("/generate-learning-plan", response_model=LearningPlanResponse)
 async def generate_learning_plan(request: LearningPlanRequest):
