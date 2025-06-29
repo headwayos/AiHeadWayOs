@@ -117,6 +117,51 @@ app = FastAPI(title="Cybersecurity Learning Plans API", version="1.0.0")
 api_router = APIRouter(prefix="/api")
 
 # Define Models
+
+# Assessment Models
+class AssessmentQuestion(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    question_type: str  # 'mcq', 'practical', 'coding', 'fill_blank'
+    question_text: str
+    options: Optional[List[str]] = None  # For MCQ
+    correct_answer: str
+    explanation: Optional[str] = None
+    difficulty: str  # 'beginner', 'intermediate', 'advanced'
+    points: int = Field(default=10)
+
+class Assessment(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    topic: str
+    level: str
+    questions: List[AssessmentQuestion]
+    total_points: int
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class AssessmentResponse(BaseModel):
+    question_id: str
+    answer: str
+    time_spent: int  # seconds
+
+class AssessmentSubmission(BaseModel):
+    assessment_id: str
+    responses: List[AssessmentResponse]
+    career_goal: str  # 'student', 'professional', 'career_switcher', 'faang_prep', 'startup_job'
+    current_role: Optional[str] = None
+    experience_years: Optional[int] = None
+
+class AssessmentResult(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    assessment_id: str
+    user_id: str = Field(default="anonymous")  # For future user management
+    submission: AssessmentSubmission
+    score: int
+    total_points: int
+    percentage: float
+    skill_level: str
+    recommendations: List[str]
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# Learning Plan Models
 class LearningPlanRequest(BaseModel):
     topic: str
     level: str
@@ -125,6 +170,7 @@ class LearningPlanRequest(BaseModel):
     include_labs: bool = Field(default=True)
     include_certifications: bool = Field(default=True)
     user_background: Optional[str] = Field(default="")
+    assessment_result_id: Optional[str] = None  # Link to assessment result for personalization
 
 class LearningPlan(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -136,6 +182,9 @@ class LearningPlan(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     user_background: Optional[str] = Field(default="")
+    assessment_result_id: Optional[str] = None
+    approved: bool = Field(default=False)
+    personalization_notes: Optional[str] = None
 
 class LearningPlanResponse(BaseModel):
     success: bool
@@ -144,6 +193,49 @@ class LearningPlanResponse(BaseModel):
     topic: str
     level: str
     duration_weeks: int
+
+# Learning Session Models
+class LearningSession(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    plan_id: str
+    user_id: str = Field(default="anonymous")
+    current_module: str
+    progress_percentage: float = 0.0
+    time_spent: int = 0  # minutes
+    questions_asked: int = 0
+    ai_interactions: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ChatMessage(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    session_id: str
+    sender: str  # 'user' or 'ai'
+    message: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    message_type: str = Field(default="text")  # 'text', 'code', 'question', 'explanation'
+
+# Progress Tracking Models
+class Achievement(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    icon: str
+    category: str  # 'assessment', 'learning', 'progress', 'interaction'
+    points: int
+
+class UserProgress(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str = Field(default="anonymous")
+    total_points: int = 0
+    achievements: List[str] = Field(default_factory=list)  # Achievement IDs
+    skill_levels: Dict[str, str] = Field(default_factory=dict)  # topic -> level
+    learning_streak: int = 0
+    total_time_spent: int = 0  # minutes
+    assessments_completed: int = 0
+    plans_completed: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 # Ollama Configuration - Try multiple possible host addresses
 # Since we're in a Kubernetes environment, we need to find the right host address
