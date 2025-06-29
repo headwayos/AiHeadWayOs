@@ -118,10 +118,16 @@ class MockCollection:
 class MockDB:
     def __init__(self):
         self.learning_plans = MockCollection("learning_plans")
+        self.assessments = MockCollection("assessments")
+        self.assessment_results = MockCollection("assessment_results")
+        self.learning_sessions = MockCollection("learning_sessions")
+        self.chat_messages = MockCollection("chat_messages")
+        self.user_progress = MockCollection("user_progress")
+        self.achievements = MockCollection("achievements")
         
     def __getitem__(self, collection_name):
-        if collection_name == "learning_plans":
-            return self.learning_plans
+        if hasattr(self, collection_name):
+            return getattr(self, collection_name)
         return MockCollection(collection_name)
 
 if MOCK_DB:
