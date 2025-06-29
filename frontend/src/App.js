@@ -16,6 +16,7 @@ function App() {
   const [careerGoals, setCareerGoals] = useState({});
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
+  const [currentPlanId, setCurrentPlanId] = useState(null);
 
   useEffect(() => {
     fetchTopicsAndLevels();
