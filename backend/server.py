@@ -96,14 +96,24 @@ class MockCollection:
             
     async def to_list(self, length):
         # This is an async method that returns the actual list
-        if self.collection_name == "learning_plans":
-            return in_memory_db["learning_plans"]
-        return []
+        collection_data = in_memory_db.get(self.collection_name, [])
+        return collection_data
             
     async def count_documents(self, query):
-        if self.collection_name == "learning_plans":
-            return len(in_memory_db["learning_plans"])
-        return 0
+        collection_data = in_memory_db.get(self.collection_name, [])
+        if not query:
+            return len(collection_data)
+        
+        count = 0
+        for item in collection_data:
+            match = True
+            for key, value in query.items():
+                if key in item and item[key] != value:
+                    match = False
+                    break
+            if match:
+                count += 1
+        return count
 
 class MockDB:
     def __init__(self):
