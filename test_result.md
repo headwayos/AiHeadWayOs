@@ -295,8 +295,7 @@ metadata:
 test_plan:
   current_focus:
     - "AI Plan Generation"
-  stuck_tasks: 
-    - "AI Plan Generation"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
