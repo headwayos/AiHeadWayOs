@@ -29,7 +29,13 @@ MOCK_DB = True  # Set to False in production
 
 # In-memory database for testing
 in_memory_db = {
-    "learning_plans": []
+    "learning_plans": [],
+    "assessments": [],
+    "assessment_results": [],
+    "learning_sessions": [],
+    "chat_messages": [],
+    "user_progress": [],
+    "achievements": []
 }
 
 class MockCollection:
