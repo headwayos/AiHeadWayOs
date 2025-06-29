@@ -275,6 +275,14 @@ Please ensure all recommendations are current, practical, and aligned with indus
 async def generate_with_ollama(prompt: str) -> str:
     """Generate content using Ollama API"""
     try:
+        # Try to find a working Ollama host
+        working_host = get_working_ollama_host()
+        
+        # If we found a working host, update the global OLLAMA_URL
+        global OLLAMA_URL
+        if working_host:
+            OLLAMA_URL = working_host
+        
         response = requests.post(
             f"{OLLAMA_URL}/api/generate",
             json={
