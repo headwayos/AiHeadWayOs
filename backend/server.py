@@ -1333,6 +1333,115 @@ async def update_learning_progress(session_id: str, progress_percentage: float, 
         "time_spent": time_spent
     }
 
+# Achievement and progress endpoints
+@api_router.get("/achievements")
+async def get_all_achievements():
+    """Get all available achievements"""
+    return {
+        "achievements": DEFAULT_ACHIEVEMENTS
+    }
+
+@api_router.get("/user-progress/{user_id}")
+async def get_user_progress(user_id: str = "anonymous"):
+    """Get user progress and achievements"""
+    
+    progress = await db.user_progress.find_one({"user_id": user_id})
+    if not progress:
+        # Create new progress record
+        progress = UserProgress(user_id=user_id)
+        await db.user_progress.insert_one(progress.dict())
+        progress = progress.dict()
+    
+    if "_id" in progress:
+        progress.pop("_id", None)
+    
+    # Get achievement details
+    achievement_details = []
+    for achievement_id in progress.get("achievements", []):
+        achievement = next((a for a in DEFAULT_ACHIEVEMENTS if a["id"] == achievement_id), None)
+        if achievement:
+            achievement_details.append(achievement)
+    
+    return {
+        "user_id": user_id,
+        "total_points": progress.get("total_points", 0),
+        "achievements": achievement_details,
+        "skill_levels": progress.get("skill_levels", {}),
+        "learning_streak": progress.get("learning_streak", 0),
+        "total_time_spent": progress.get("total_time_spent", 0),
+        "assessments_completed": progress.get("assessments_completed", 0),
+        "plans_completed": progress.get("plans_completed", 0)
+    }
+
+@api_router.post("/award-achievement")
+async def award_achievement(user_id: str, achievement_id: str):
+    """Award an achievement to a user"""
+    
+    # Verify achievement exists
+    achievement = next((a for a in DEFAULT_ACHIEVEMENTS if a["id"] == achievement_id), None)
+    if not achievement:
+        raise HTTPException(status_code=404, detail="Achievement not found")
+    
+    # Get or create user progress
+    progress = await db.user_progress.find_one({"user_id": user_id})
+    if not progress:
+        progress = UserProgress(user_id=user_id)
+        await db.user_progress.insert_one(progress.dict())
+        progress = progress.dict()
+    
+    # Check if user already has this achievement
+    if achievement_id in progress.get("achievements", []):
+        return {
+            "success": False,
+            "message": "User already has this achievement"
+        }
+    
+    # Award achievement
+    await db.user_progress.find_one_and_update(
+        {"user_id": user_id},
+        {
+            "$push": {"achievements": achievement_id},
+            "$inc": {"total_points": achievement["points"]},
+            "$set": {"updated_at": datetime.utcnow()}
+        }
+    )
+    
+    return {
+        "success": True,
+        "achievement": achievement,
+        "points_awarded": achievement["points"]
+    }
+
+@api_router.post("/approve-learning-plan/{plan_id}")
+async def approve_learning_plan(plan_id: str, approved: bool = True):
+    """Approve or reject a learning plan"""
+    
+    result = await db.learning_plans.find_one_and_update(
+        {"id": plan_id},
+        {
+            "$set": {
+                "approved": approved,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="Learning plan not found")
+    
+    # Award achievement for first approved plan
+    if approved:
+        try:
+            await award_achievement("anonymous", "plan_approved")
+        except:
+            pass  # Ignore if already awarded
+    
+    return {
+        "success": True,
+        "plan_id": plan_id,
+        "approved": approved
+    }
+
 @api_router.post("/generate-learning-plan", response_model=LearningPlanResponse)
 async def generate_learning_plan(request: LearningPlanRequest):
     """Generate a comprehensive cybersecurity learning plan"""
