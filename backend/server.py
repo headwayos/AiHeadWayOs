@@ -1456,11 +1456,27 @@ async def generate_learning_plan(request: LearningPlanRequest):
     if request.level not in SKILL_LEVELS:
         raise HTTPException(status_code=400, detail=f"Invalid level. Available levels: {list(SKILL_LEVELS.keys())}")
     
-    # Create assessment prompt
-    prompt = create_assessment_prompt(request.topic, request.level, request.career_goal)
+    # Get assessment result if provided for personalization
+    personalization_notes = ""
+    if request.assessment_result_id:
+        assessment_result = await db.assessment_results.find_one({"id": request.assessment_result_id})
+        if assessment_result:
+            personalization_notes = f"""
+PERSONALIZATION BASED ON ASSESSMENT:
+- Assessment Score: {assessment_result['score']}/{assessment_result['total_points']} ({assessment_result['percentage']}%)
+- Determined Skill Level: {assessment_result['skill_level']}
+- Career Goal: {assessment_result['submission']['career_goal']}
+- Recommendations: {', '.join(assessment_result['recommendations'])}
+
+Please tailor the learning plan to address the learner's specific strengths and areas for improvement based on their assessment performance.
+"""
+    
+    # Create comprehensive prompt with personalization
+    base_prompt = create_comprehensive_prompt(request)
+    full_prompt = base_prompt + personalization_notes
     
     # Generate content using Ollama
-    curriculum = await generate_with_ollama(prompt)
+    curriculum = await generate_with_ollama(full_prompt)
     
     if not curriculum:
         raise HTTPException(status_code=500, detail="Failed to generate curriculum content")
@@ -1472,7 +1488,9 @@ async def generate_learning_plan(request: LearningPlanRequest):
         duration_weeks=request.duration_weeks,
         focus_areas=request.focus_areas,
         curriculum=curriculum,
-        user_background=request.user_background
+        user_background=request.user_background,
+        assessment_result_id=request.assessment_result_id,
+        personalization_notes=personalization_notes
     )
     
     # Save to database
