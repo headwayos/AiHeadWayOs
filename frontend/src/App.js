@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Assessment from './components/Assessment';
+import LearningSession from './components/LearningSession';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -7,13 +9,17 @@ const API = `${BACKEND_URL}/api`;
 
 // Main App Component
 function App() {
-  const [activeTab, setActiveTab] = useState('generate');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [topics, setTopics] = useState({});
   const [levels, setLevels] = useState({});
   const [focusAreas, setFocusAreas] = useState([]);
+  const [careerGoals, setCareerGoals] = useState({});
+  const [assessmentResult, setAssessmentResult] = useState(null);
+  const [userProgress, setUserProgress] = useState(null);
 
   useEffect(() => {
     fetchTopicsAndLevels();
+    fetchUserProgress();
   }, []);
 
   const fetchTopicsAndLevels = async () => {
@@ -22,9 +28,30 @@ function App() {
       setTopics(response.data.topics);
       setLevels(response.data.levels);
       setFocusAreas(response.data.focus_areas);
+      setCareerGoals(response.data.career_goals);
     } catch (error) {
       console.error('Error fetching topics:', error);
     }
+  };
+
+  const fetchUserProgress = async () => {
+    try {
+      const response = await axios.get(`${API}/user-progress/anonymous`);
+      setUserProgress(response.data);
+    } catch (error) {
+      console.error('Error fetching user progress:', error);
+    }
+  };
+
+  const handleAssessmentComplete = (result) => {
+    setAssessmentResult(result);
+    setActiveTab('generate');
+    fetchUserProgress(); // Refresh progress after assessment
+  };
+
+  const handleBackToDashboard = () => {
+    setActiveTab('dashboard');
+    setAssessmentResult(null);
   };
 
   return (
@@ -33,55 +60,266 @@ function App() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-white mb-4">
-            🛡️ CyberSec Learning Hub
+            🛡️ CyberSec Learning Hub 2.0
           </h1>
           <p className="text-xl text-blue-200 max-w-3xl mx-auto">
-            AI-Powered Cybersecurity Learning Plans & Roadmaps
+            AI-Powered Personalized Cybersecurity Learning with 1:1 Teaching
           </p>
           <p className="text-lg text-gray-300 mt-2">
-            Personalized learning paths powered by advanced AI for all skill levels
+            Assess → Learn → Master with AI guidance at every step
           </p>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-gray-800 rounded-lg p-1 flex space-x-1">
-            <button
-              onClick={() => setActiveTab('generate')}
-              className={`px-6 py-3 rounded-md font-medium transition-all ${
-                activeTab === 'generate'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              Generate Plan
-            </button>
-            <button
-              onClick={() => setActiveTab('plans')}
-              className={`px-6 py-3 rounded-md font-medium transition-all ${
-                activeTab === 'plans'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
-              }`}
-            >
-              My Plans
-            </button>
+        {/* Navigation - only show if not in learning session */}
+        {activeTab !== 'learning' && (
+          <div className="flex justify-center mb-8">
+            <div className="bg-gray-800 rounded-lg p-1 flex space-x-1">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-6 py-3 rounded-md font-medium transition-all ${
+                  activeTab === 'dashboard'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                🏠 Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('assessment')}
+                className={`px-6 py-3 rounded-md font-medium transition-all ${
+                  activeTab === 'assessment'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                🎯 Assessment
+              </button>
+              <button
+                onClick={() => setActiveTab('generate')}
+                className={`px-6 py-3 rounded-md font-medium transition-all ${
+                  activeTab === 'generate'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                📋 Generate Plan
+              </button>
+              <button
+                onClick={() => setActiveTab('plans')}
+                className={`px-6 py-3 rounded-md font-medium transition-all ${
+                  activeTab === 'plans'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                }`}
+              >
+                📚 My Plans
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Tab Content */}
+        {activeTab === 'dashboard' && (
+          <Dashboard 
+            userProgress={userProgress}
+            onStartAssessment={() => setActiveTab('assessment')}
+            onGeneratePlan={() => setActiveTab('generate')}
+            onViewPlans={() => setActiveTab('plans')}
+          />
+        )}
+        {activeTab === 'assessment' && (
+          <Assessment 
+            onAssessmentComplete={handleAssessmentComplete}
+            onBack={handleBackToDashboard}
+          />
+        )}
         {activeTab === 'generate' && (
           <GeneratePlan 
             topics={topics} 
             levels={levels} 
-            focusAreas={focusAreas} 
+            focusAreas={focusAreas}
+            assessmentResult={assessmentResult}
+            onBack={handleBackToDashboard}
           />
         )}
-        {activeTab === 'plans' && <MyPlans />}
+        {activeTab === 'plans' && (
+          <MyPlans 
+            onStartLearning={(planId) => {
+              setActiveTab('learning');
+              setActiveTab('learning-' + planId);
+            }}
+            onBack={handleBackToDashboard}
+          />
+        )}
+        {activeTab.startsWith('learning-') && (
+          <LearningSession 
+            planId={activeTab.split('-')[1]}
+            onBack={handleBackToDashboard}
+          />
+        )}
       </div>
     </div>
   );
 }
+
+// Dashboard Component
+const Dashboard = ({ userProgress, onStartAssessment, onGeneratePlan, onViewPlans }) => {
+  return (
+    <div className="max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Welcome & Quick Actions */}
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl">
+            <h2 className="text-3xl font-bold text-white mb-6">
+              Welcome to Your Learning Journey! 🚀
+            </h2>
+            <p className="text-gray-300 mb-8">
+              Start with a personalized assessment to unlock AI-powered learning tailored just for you.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={onStartAssessment}
+                className="p-6 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl text-white hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+              >
+                <div className="text-4xl mb-4">🎯</div>
+                <h3 className="text-xl font-bold mb-2">Take Assessment</h3>
+                <p className="text-sm opacity-90">Discover your skill level and get personalized recommendations</p>
+              </button>
+              
+              <button
+                onClick={onGeneratePlan}
+                className="p-6 bg-gradient-to-br from-green-600 to-teal-600 rounded-xl text-white hover:from-green-700 hover:to-teal-700 transition-all transform hover:scale-105"
+              >
+                <div className="text-4xl mb-4">📋</div>
+                <h3 className="text-xl font-bold mb-2">Create Plan</h3>
+                <p className="text-sm opacity-90">Generate a customized learning plan for your goals</p>
+              </button>
+              
+              <button
+                onClick={onViewPlans}
+                className="p-6 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl text-white hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-105"
+              >
+                <div className="text-4xl mb-4">📚</div>
+                <h3 className="text-xl font-bold mb-2">My Plans</h3>
+                <p className="text-sm opacity-90">Continue learning with your saved plans</p>
+              </button>
+              
+              <div className="p-6 bg-gradient-to-br from-orange-600 to-red-600 rounded-xl text-white">
+                <div className="text-4xl mb-4">🤖</div>
+                <h3 className="text-xl font-bold mb-2">AI Tutor</h3>
+                <p className="text-sm opacity-90">Get real-time help and guidance while learning</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl">
+            <h3 className="text-2xl font-bold text-white mb-6">✨ New Features</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex items-start space-x-4">
+                <div className="text-2xl">🎯</div>
+                <div>
+                  <h4 className="text-lg font-semibold text-white">Smart Assessment</h4>
+                  <p className="text-gray-300 text-sm">AI-generated questions adapted to your level and career goals</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="text-2xl">🤖</div>
+                <div>
+                  <h4 className="text-lg font-semibold text-white">1:1 AI Tutoring</h4>
+                  <p className="text-gray-300 text-sm">Real-time conversation with AI for instant help and guidance</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="text-2xl">📈</div>
+                <div>
+                  <h4 className="text-lg font-semibold text-white">Progress Tracking</h4>
+                  <p className="text-gray-300 text-sm">Detailed analytics and achievement system</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="text-2xl">✅</div>
+                <div>
+                  <h4 className="text-lg font-semibold text-white">Plan Approval</h4>
+                  <p className="text-gray-300 text-sm">Review and approve personalized learning plans</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress & Achievements */}
+        <div className="space-y-8">
+          <div className="bg-gray-800 rounded-2xl p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-4">📊 Your Progress</h3>
+            {userProgress ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-400 mb-1">
+                    {userProgress.total_points}
+                  </div>
+                  <div className="text-gray-300 text-sm">Total Points</div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-xl font-bold text-green-400">
+                      {userProgress.assessments_completed}
+                    </div>
+                    <div className="text-gray-400 text-xs">Assessments</div>
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold text-purple-400">
+                      {userProgress.plans_completed}
+                    </div>
+                    <div className="text-gray-400 text-xs">Plans</div>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-lg text-orange-400 font-semibold">
+                    🔥 {userProgress.learning_streak} day streak
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-400 py-8">
+                <div className="text-4xl mb-4">📈</div>
+                <p>Start your first assessment to see your progress!</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-gray-800 rounded-2xl p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-4">🏆 Achievements</h3>
+            {userProgress && userProgress.achievements.length > 0 ? (
+              <div className="space-y-3">
+                {userProgress.achievements.slice(0, 3).map((achievement, index) => (
+                  <div key={index} className="flex items-center space-x-3 p-3 bg-gray-700 rounded-lg">
+                    <div className="text-2xl">{achievement.icon}</div>
+                    <div>
+                      <div className="text-white font-semibold text-sm">{achievement.name}</div>
+                      <div className="text-gray-400 text-xs">{achievement.points} pts</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-400 py-8">
+                <div className="text-4xl mb-4">🏆</div>
+                <p>Earn achievements as you learn!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Generate Plan Component
 const GeneratePlan = ({ topics, levels, focusAreas }) => {
