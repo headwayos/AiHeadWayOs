@@ -333,6 +333,68 @@ FOCUS_AREAS = [
     "Leadership Skills"
 ]
 
+CAREER_GOALS = {
+    "student": "Student - Learning cybersecurity fundamentals",
+    "professional": "Professional - Advancing current cybersecurity career",
+    "career_switcher": "Career Switcher - Transitioning to cybersecurity",
+    "faang_prep": "FAANG Preparation - Targeting top tech companies",
+    "maang_prep": "MAANG Preparation - Targeting major tech companies", 
+    "startup_job": "Startup Job - Looking for cybersecurity roles in startups",
+    "freelance": "Freelance - Building independent cybersecurity consulting skills",
+    "government": "Government - Preparing for public sector cybersecurity roles"
+}
+
+QUESTION_TYPES = {
+    "mcq": "Multiple Choice Question",
+    "practical": "Practical Scenario",
+    "coding": "Coding Challenge",
+    "fill_blank": "Fill in the Blanks"
+}
+
+# Default achievements
+DEFAULT_ACHIEVEMENTS = [
+    {
+        "id": "first_assessment",
+        "name": "First Steps",
+        "description": "Completed your first cybersecurity assessment",
+        "icon": "🎯",
+        "category": "assessment",
+        "points": 50
+    },
+    {
+        "id": "plan_approved",
+        "name": "Plan Maker",
+        "description": "Approved your first personalized learning plan",
+        "icon": "📋",
+        "category": "learning",
+        "points": 100
+    },
+    {
+        "id": "first_session",
+        "name": "Learning Journey",
+        "description": "Started your first learning session",
+        "icon": "🚀",
+        "category": "learning",
+        "points": 75
+    },
+    {
+        "id": "ai_helper",
+        "name": "AI Companion",
+        "description": "Had your first conversation with AI tutor",
+        "icon": "🤖",
+        "category": "interaction",
+        "points": 25
+    },
+    {
+        "id": "progress_tracker",
+        "name": "Progress Champion",
+        "description": "Completed 25% of your learning plan",
+        "icon": "📈",
+        "category": "progress",
+        "points": 200
+    }
+]
+
 def create_comprehensive_prompt(request: LearningPlanRequest) -> str:
     """Create a comprehensive prompt for generating cybersecurity learning plans"""
     
