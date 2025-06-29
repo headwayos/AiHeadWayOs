@@ -599,17 +599,22 @@ async def delete_learning_plan(plan_id: str):
 async def health_check():
     """Health check endpoint"""
     try:
-        # Try to find a working Ollama host
-        working_host = get_working_ollama_host()
-        
-        # Test Ollama connection with the working host
-        response = requests.get(f"{working_host}/api/tags", timeout=5)
-        ollama_status = "healthy" if response.status_code == 200 else "unhealthy"
-        
-        # If we found a working host, update the global OLLAMA_URL
-        global OLLAMA_URL
-        if ollama_status == "healthy":
-            OLLAMA_URL = working_host
+        # For testing purposes, we'll use a mock implementation
+        if MOCK_OLLAMA:
+            ollama_status = "healthy"  # Pretend Ollama is healthy
+            logger.info("Using mock implementation for Ollama health check")
+        else:
+            # Try to find a working Ollama host
+            working_host = get_working_ollama_host()
+            
+            # Test Ollama connection with the working host
+            response = requests.get(f"{working_host}/api/tags", timeout=5)
+            ollama_status = "healthy" if response.status_code == 200 else "unhealthy"
+            
+            # If we found a working host, update the global OLLAMA_URL
+            global OLLAMA_URL
+            if ollama_status == "healthy":
+                OLLAMA_URL = working_host
         
         # Test database connection
         await db.learning_plans.find_one()
@@ -617,7 +622,10 @@ async def health_check():
         
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        ollama_status = "unhealthy"
+        if MOCK_OLLAMA:
+            ollama_status = "healthy"  # Pretend Ollama is healthy
+        else:
+            ollama_status = "unhealthy"
         db_status = "unhealthy"
     
     return {
@@ -625,7 +633,8 @@ async def health_check():
         "ollama": ollama_status,
         "database": db_status,
         "model": OLLAMA_MODEL,
-        "ollama_url": OLLAMA_URL
+        "ollama_url": OLLAMA_URL,
+        "mock_mode": MOCK_OLLAMA
     }
 
 # Include the router in the main app
