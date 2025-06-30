@@ -1055,5 +1055,79 @@ def run_all_tests():
     
     return test_results
 
+def run_focused_tests():
+    """Run focused tests on endpoints that need retesting"""
+    print(f"\n{'='*80}\nRunning Focused Tests for Cybersecurity Learning Platform API\n{'='*80}")
+    print(f"API Base URL: {API_BASE_URL}")
+    
+    # Test get topics (basic connectivity test)
+    topics_result = run_test("Get Topics", test_get_topics)
+    
+    # Test assessment generation
+    assessment_result = run_test("Generate Assessment", test_generate_assessment)
+    
+    assessment_id = None
+    assessment_result_id = None
+    if assessment_result and assessment_result.get("success"):
+        assessment_id = assessment_result.get("assessment_id")
+        
+        # Test assessment submission
+        submission_result = run_test("Submit Assessment", test_submit_assessment, assessment_id)
+        
+        if submission_result and submission_result.get("success"):
+            assessment_result_id = submission_result.get("result_id")
+    
+    # Test generate learning plan
+    plan_result = run_test("Generate Learning Plan", test_generate_learning_plan)
+    
+    # If plan generation succeeded, test plan approval (FOCUS AREA 1)
+    plan_id = None
+    if plan_result and plan_result.get("success"):
+        plan_id = plan_result.get("plan_id")
+        
+        # Test plan approval - FOCUS AREA 1
+        print("\n🔍 FOCUS AREA 1: Testing Plan Approval API")
+        approval_result = run_test("Approve Learning Plan", test_approve_learning_plan, plan_id)
+        
+        # Test learning session management
+        session_result = run_test("Start Learning Session", test_start_learning_session, plan_id)
+        
+        session_id = None
+        if session_result and session_result.get("success"):
+            session_id = session_result.get("session_id")
+            
+            # Test get learning session
+            run_test("Get Learning Session", test_get_learning_session, session_id)
+            
+            # Test update progress - FOCUS AREA 2
+            print("\n🔍 FOCUS AREA 2: Testing Update Progress API")
+            run_test("Update Progress", test_update_progress, session_id)
+            
+            # Test chat with AI - FOCUS AREA 3
+            print("\n🔍 FOCUS AREA 3: Testing AI Chat Functionality")
+            chat_result = run_test("Chat with AI", test_chat_with_ai, session_id)
+            
+            # Test get chat history - FOCUS AREA 3
+            if chat_result and chat_result.get("success"):
+                run_test("Get Chat History", test_get_chat_history, session_id)
+    
+    # Print summary
+    print(f"\n{'='*80}\nTest Summary\n{'='*80}")
+    print(f"Total tests: {test_results['total_tests']}")
+    print(f"Passed tests: {test_results['passed_tests']}")
+    print(f"Failed tests: {test_results['failed_tests']}")
+    print(f"Success rate: {(test_results['passed_tests'] / test_results['total_tests']) * 100:.2f}%")
+    
+    # Print detailed results
+    print(f"\n{'='*80}\nDetailed Test Results\n{'='*80}")
+    for i, test in enumerate(test_results["test_details"], 1):
+        print(f"{i}. {test['name']}: {test['status']}")
+        if "duration" in test:
+            print(f"   Duration: {test['duration']}s")
+        if test["status"] != "PASSED":
+            print(f"   Details: {json.dumps(test['details'], indent=2)}")
+    
+    return test_results
+
 if __name__ == "__main__":
-    run_all_tests()
+    run_focused_tests()
