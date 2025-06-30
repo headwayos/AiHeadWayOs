@@ -1108,9 +1108,9 @@ def run_all_tests():
     
     return test_results
 
-def run_focused_tests():
-    """Run focused tests on endpoints that need retesting"""
-    print(f"\n{'='*80}\nRunning Focused Tests for Cybersecurity Learning Platform API\n{'='*80}")
+def run_comprehensive_tests():
+    """Run comprehensive tests on all endpoints"""
+    print(f"\n{'='*80}\nRunning Comprehensive Tests for Cybersecurity Learning Platform API\n{'='*80}")
     print(f"API Base URL: {API_BASE_URL}")
     
     # Test get topics (basic connectivity test)
@@ -1133,13 +1133,16 @@ def run_focused_tests():
     # Test generate learning plan
     plan_result = run_test("Generate Learning Plan", test_generate_learning_plan)
     
-    # If plan generation succeeded, test plan approval (FOCUS AREA 1)
+    # If assessment result is available, test personalized learning plan
+    if assessment_result_id:
+        run_test("Generate Learning Plan with Assessment", test_generate_learning_plan_with_assessment, assessment_result_id)
+    
+    # If plan generation succeeded, test plan approval and learning sessions
     plan_id = None
     if plan_result and plan_result.get("success"):
         plan_id = plan_result.get("plan_id")
         
-        # Test plan approval - FOCUS AREA 1
-        print("\n🔍 FOCUS AREA 1: Testing Plan Approval API")
+        # Test plan approval
         approval_result = run_test("Approve Learning Plan", test_approve_learning_plan, plan_id)
         
         # Test learning session management
@@ -1152,17 +1155,26 @@ def run_focused_tests():
             # Test get learning session
             run_test("Get Learning Session", test_get_learning_session, session_id)
             
-            # Test update progress - FOCUS AREA 2
-            print("\n🔍 FOCUS AREA 2: Testing Update Progress API")
-            run_test("Update Progress", test_update_progress, session_id)
-            
-            # Test chat with AI - FOCUS AREA 3
-            print("\n🔍 FOCUS AREA 3: Testing AI Chat Functionality")
+            # Test chat with AI
             chat_result = run_test("Chat with AI", test_chat_with_ai, session_id)
             
-            # Test get chat history - FOCUS AREA 3
+            # Test get chat history
             if chat_result and chat_result.get("success"):
                 run_test("Get Chat History", test_get_chat_history, session_id)
+            
+            # Test update progress
+            run_test("Update Progress", test_update_progress, session_id)
+    
+    # Test achievements and progress tracking
+    run_test("Get Achievements", test_get_achievements)
+    run_test("Get User Progress", test_get_user_progress)
+    
+    # Test list learning plans
+    run_test("List Learning Plans", test_list_learning_plans)
+    
+    # If plan_id is available, test get specific plan
+    if plan_id:
+        run_test("Get Specific Plan", test_get_specific_plan, plan_id)
     
     # Print summary
     print(f"\n{'='*80}\nTest Summary\n{'='*80}")
@@ -1183,4 +1195,4 @@ def run_focused_tests():
     return test_results
 
 if __name__ == "__main__":
-    run_focused_tests()
+    run_comprehensive_tests()
