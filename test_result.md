@@ -287,7 +287,7 @@ backend:
 
   - task: "AI Chat Functionality"
     implemented: true
-    working: false
+    working: partial
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
@@ -296,6 +296,9 @@ backend:
         - working: "NA"
         - agent: "testing"
         - comment: "Tested the AI Chat Functionality but encountered a 500 Internal Server Error with the message 'Failed to generate AI response'. The Chat History endpoint also returns a 500 Internal Server Error. The mock Ollama implementation may need to be extended to support chat functionality."
+        - working: "partial"
+        - agent: "testing"
+        - comment: "AI Chat Functionality is partially working. The Chat with AI endpoint now works correctly and returns appropriate responses, but the Chat History endpoint still returns a 500 Internal Server Error."
 
   - task: "Progress Tracking APIs"
     implemented: true
