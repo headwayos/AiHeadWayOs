@@ -645,8 +645,20 @@ def test_get_learning_session(session_id: str):
 def test_chat_with_ai(session_id: str):
     """Test the chat with AI endpoint"""
     try:
+        # First, verify the session exists
+        get_session_response = requests.get(f"{API_BASE_URL}/learning-session/{session_id}", timeout=10)
+        if get_session_response.status_code != 200:
+            print(f"Session with ID {session_id} not found: {get_session_response.status_code} - {get_session_response.text}")
+            return {
+                "success": False,
+                "status_code": get_session_response.status_code,
+                "error": f"Session not found: {get_session_response.text}"
+            }
+        
         # Sample message
         message = "Can you explain the concept of defense in depth in network security?"
+        
+        print(f"Sending chat message to AI for session {session_id}: '{message}'")
         
         response = requests.post(
             f"{API_BASE_URL}/chat-with-ai?session_id={session_id}&message={message}",
