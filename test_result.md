@@ -299,6 +299,9 @@ backend:
         - working: "partial"
         - agent: "testing"
         - comment: "AI Chat Functionality is partially working. The Chat with AI endpoint now works correctly and returns appropriate responses, but the Chat History endpoint still returns a 500 Internal Server Error."
+        - working: "partial"
+        - agent: "testing"
+        - comment: "Diagnosed the Chat History issue: The MockCollection.sort() method doesn't actually sort the data, causing an error when trying to sort chat messages by timestamp. Created a workaround and provided two possible fixes: 1) Implement proper sorting in the MockCollection class, or 2) Modify the get_chat_history endpoint to not rely on sorting."
 
   - task: "Progress Tracking APIs"
     implemented: true
