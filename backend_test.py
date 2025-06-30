@@ -752,9 +752,21 @@ def test_get_chat_history(session_id: str):
 def test_update_progress(session_id: str):
     """Test the update progress endpoint"""
     try:
+        # First, verify the session exists
+        get_session_response = requests.get(f"{API_BASE_URL}/learning-session/{session_id}", timeout=10)
+        if get_session_response.status_code != 200:
+            print(f"Session with ID {session_id} not found: {get_session_response.status_code} - {get_session_response.text}")
+            return {
+                "success": False,
+                "status_code": get_session_response.status_code,
+                "error": f"Session not found: {get_session_response.text}"
+            }
+        
         # Sample progress data
         progress_percentage = 25.0
         time_spent = 30  # minutes
+        
+        print(f"Updating progress for session {session_id} to {progress_percentage}% and {time_spent} minutes")
         
         response = requests.post(
             f"{API_BASE_URL}/update-progress?session_id={session_id}&progress_percentage={progress_percentage}&time_spent={time_spent}",
