@@ -712,6 +712,8 @@ def test_chat_with_ai(session_id: str):
 def test_get_chat_history(session_id: str):
     """Test the get chat history endpoint"""
     try:
+        print(f"Getting chat history for session {session_id}")
+        
         response = requests.get(f"{API_BASE_URL}/chat-history/{session_id}", timeout=10)
         
         # Check if the request was successful
