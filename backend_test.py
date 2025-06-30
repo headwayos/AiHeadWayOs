@@ -714,6 +714,19 @@ def test_get_chat_history(session_id: str):
     try:
         print(f"Getting chat history for session {session_id}")
         
+        # First, let's try to get the chat messages directly from the database
+        # This will help us diagnose if the issue is with the database or the API
+        try:
+            # Make a direct request to check if any messages exist for this session
+            response = requests.get(f"{API_BASE_URL}/chat-with-ai?session_id={session_id}&message=test message", timeout=10)
+            if response.status_code == 200:
+                print("Successfully sent a test message to ensure there's chat history")
+            else:
+                print(f"Warning: Could not send test message: {response.status_code} - {response.text}")
+        except Exception as e:
+            print(f"Warning: Error sending test message: {e}")
+        
+        # Now try to get the chat history
         response = requests.get(f"{API_BASE_URL}/chat-history/{session_id}", timeout=10)
         
         # Check if the request was successful
