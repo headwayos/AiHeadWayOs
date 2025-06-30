@@ -4,7 +4,7 @@ import axios from 'axios';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const LearningSession = ({ planId, onBack }) => {
+const LearningSession = ({ planId, onBack, addNotification }) => {
   const [session, setSession] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -13,6 +13,13 @@ const LearningSession = ({ planId, onBack }) => {
   const [plan, setPlan] = useState(null);
   const [progress, setProgress] = useState(0);
   const [timeSpent, setTimeSpent] = useState(0);
+  const [isTyping, setIsTyping] = useState(false);
+  const [currentTopic, setCurrentTopic] = useState(null);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [codeExample, setCodeExample] = useState('');
+  const [terminalHistory, setTerminalHistory] = useState([]);
+  const [terminalInput, setTerminalInput] = useState('');
   const messagesEndRef = useRef(null);
   const startTimeRef = useRef(Date.now());
 
@@ -53,8 +60,16 @@ const LearningSession = ({ planId, onBack }) => {
         await sendWelcomeMessage(sessionResponse.data.session_id, planResponse.data);
       }
       
+      // Initialize current topic
+      setCurrentTopic({
+        title: "Introduction to " + planResponse.data.topic.replace('-', ' ').toUpperCase(),
+        description: "Let's start with the fundamentals and build your knowledge step by step.",
+        completed: false
+      });
+      
     } catch (error) {
       console.error('Error starting learning session:', error);
+      addNotification?.('Error starting learning session', 'error');
     } finally {
       setLoading(false);
     }
@@ -70,27 +85,27 @@ const LearningSession = ({ planId, onBack }) => {
   };
 
   const sendWelcomeMessage = async (sessionId, planData) => {
-    const welcomeMessage = `Welcome to your personalized cybersecurity learning journey! 🎯
+    const welcomeMessage = `🛡️ **CYBER TUTOR AI ONLINE** 
 
-I'm your AI tutor, and I'll be guiding you through: **${planData.topic.replace('-', ' ').toUpperCase()}**
+Welcome to your personalized cybersecurity learning session! I'm your AI instructor, ready to guide you through **${planData.topic.replace('-', ' ').toUpperCase()}**.
 
-Here's what we'll cover together:
-- Interactive learning sessions
-- Real-time Q&A support  
-- Practical exercises and guidance
-- Progress tracking and feedback
+**SESSION INITIALIZED:**
+✅ Learning plan loaded
+✅ AI tutor activated  
+✅ Real-time assistance ready
+✅ Progress tracking enabled
 
-Feel free to ask me anything about:
-✓ Concepts you don't understand
-✓ Practical implementation questions
-✓ Career advice and next steps
-✓ Study strategies and tips
+**AVAILABLE COMMANDS:**
+🎯 \`/quiz\` - Generate practice questions
+📊 \`/progress\` - View learning analytics
+🔍 \`/explain [topic]\` - Deep dive explanations
+💻 \`/demo\` - Request code demonstrations
+🛠️ \`/terminal\` - Access practice terminal
 
-Ready to begin? What would you like to start with today?`;
+**Ready to begin your cybersecurity journey?**
+What would you like to explore first? I can explain concepts, provide examples, or quiz your understanding!`;
 
     try {
-      const response = await axios.post(`${API}/chat-with-ai?session_id=${sessionId}&message=${encodeURIComponent("Welcome the learner and introduce the learning plan")}`);
-      
       const aiMessage = {
         id: Date.now().toString(),
         session_id: sessionId,
@@ -120,6 +135,7 @@ Ready to begin? What would you like to start with today?`;
 
     setChatMessages(prev => [...prev, userMessage]);
     setSendingMessage(true);
+    setIsTyping(true);
     
     const messageToSend = newMessage;
     setNewMessage('');
@@ -127,27 +143,34 @@ Ready to begin? What would you like to start with today?`;
     try {
       const response = await axios.post(`${API}/chat-with-ai?session_id=${session.session_id}&message=${encodeURIComponent(messageToSend)}`);
       
-      const aiMessage = {
-        id: response.data.message_id,
-        session_id: session.session_id,
-        sender: 'ai',
-        message: response.data.ai_response,
-        timestamp: new Date().toISOString(),
-        message_type: 'text'
-      };
+      // Simulate typing delay
+      setTimeout(() => {
+        setIsTyping(false);
+        const aiMessage = {
+          id: response.data.message_id || Date.now().toString(),
+          session_id: session.session_id,
+          sender: 'ai',
+          message: response.data.ai_response,
+          timestamp: new Date().toISOString(),
+          message_type: 'text'
+        };
+        
+        setChatMessages(prev => [...prev, aiMessage]);
+      }, 1500);
       
-      setChatMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
+      setIsTyping(false);
       const errorMessage = {
         id: Date.now().toString(),
         session_id: session.session_id,
         sender: 'ai',
-        message: 'Sorry, I encountered an error. Please try again.',
+        message: '🚨 **SYSTEM ERROR** - Connection lost. Please try again.',
         timestamp: new Date().toISOString(),
         message_type: 'error'
       };
       setChatMessages(prev => [...prev, errorMessage]);
+      addNotification?.('Error sending message', 'error');
     } finally {
       setSendingMessage(false);
     }
@@ -159,66 +182,117 @@ Ready to begin? What would you like to start with today?`;
     try {
       await axios.post(`${API}/update-progress?session_id=${session.session_id}&progress_percentage=${newProgress}&time_spent=${timeSpent}`);
       setProgress(newProgress);
+      addNotification?.(`Progress updated: ${newProgress}%`, 'success');
     } catch (error) {
       console.error('Error updating progress:', error);
     }
   };
 
-  const quickQuestions = [
-    "Can you explain this concept in simpler terms?",
-    "What are some real-world examples?",
-    "How do I implement this in practice?",
-    "What are the common mistakes to avoid?",
-    "Can you give me a step-by-step guide?",
-    "What should I study next?"
-  ];
+  const handleQuickAction = (action) => {
+    const actions = {
+      quiz: "Generate a quick quiz on what we've covered so far",
+      explain: "Can you explain the current topic in more detail?",
+      demo: "Show me a practical demonstration or code example",
+      next: "What should I focus on next in my learning path?",
+      help: "What commands and features are available?",
+      summary: "Summarize what we've learned in this session"
+    };
+    
+    setNewMessage(actions[action] || action);
+  };
+
+  const handleTerminalCommand = (command) => {
+    const output = simulateTerminalCommand(command);
+    setTerminalHistory(prev => [...prev, { command, output, timestamp: new Date().toISOString() }]);
+    setTerminalInput('');
+  };
+
+  const simulateTerminalCommand = (command) => {
+    const commands = {
+      'ls': 'config.py  network_scan.py  vulnerability_test.py  logs/',
+      'pwd': '/home/cybersec/practice',
+      'whoami': 'cybersec-student',
+      'nmap -sV localhost': 'Starting Nmap scan on localhost...\nPORT     STATE SERVICE VERSION\n22/tcp   open  ssh     OpenSSH 8.2p1\n80/tcp   open  http    nginx 1.18.0\n443/tcp  open  https   nginx 1.18.0',
+      'help': 'Available commands: ls, pwd, whoami, nmap, netstat, ps, grep, cat, echo',
+      'netstat -an': 'Active Internet connections:\nProto Local Address Foreign Address State\ntcp   0.0.0.0:22    0.0.0.0:*       LISTEN\ntcp   0.0.0.0:80    0.0.0.0:*       LISTEN',
+    };
+    
+    return commands[command] || `Command '${command}' not found. Type 'help' for available commands.`;
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-dark-bg">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mb-4"></div>
-          <p className="text-gray-400">Starting your learning session...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-neon-teal mb-4 mx-auto"></div>
+          <p className="text-neon-teal font-mono text-lg">INITIALIZING LEARNING SESSION...</p>
+          <div className="mt-4 space-y-2">
+            <div className="w-64 bg-dark-border rounded h-2 mx-auto">
+              <div className="bg-neon-teal h-2 rounded animate-pulse" style={{width: '60%'}}></div>
+            </div>
+            <p className="text-gray-400 text-sm font-mono">Loading AI tutor interface...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto h-screen flex flex-col">
+    <div className="max-w-full mx-auto h-screen flex flex-col bg-dark-bg">
       {/* Header */}
-      <div className="bg-gray-800 rounded-t-2xl p-6 shadow-lg">
+      <div className="glass-card rounded-t-2xl p-4 shadow-cyber-glow border-b border-neon-teal">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={onBack}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-neon-teal transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-white">
-                🤖 AI Learning Session
+              <h1 className="text-2xl font-bold text-white font-mono">
+                <span className="neon-text-teal">🤖 CYBER TUTOR</span> <span className="text-neon-green">ACTIVE</span>
               </h1>
-              <p className="text-gray-300">
-                {plan && plan.topic.replace('-', ' ').toUpperCase()} • {timeSpent} min
+              <p className="text-gray-300 font-mono text-sm">
+                {plan && plan.topic.replace('-', ' ').toUpperCase()} • SESSION TIME: {timeSpent}m
               </p>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-6">
+            {/* Progress Ring */}
+            <div className="relative">
+              <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50" cy="50" r="40"
+                  stroke="currentColor" strokeWidth="8" fill="transparent"
+                  className="text-dark-border"
+                />
+                <circle
+                  cx="50" cy="50" r="40"
+                  stroke="currentColor" strokeWidth="8" fill="transparent"
+                  strokeDasharray={`${2 * Math.PI * 40}`}
+                  strokeDashoffset={`${2 * Math.PI * 40 * (1 - progress / 100)}`}
+                  className="text-neon-green transition-all duration-500"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-bold text-neon-green font-mono">{Math.round(progress)}%</span>
+              </div>
+            </div>
+            
+            {/* System Status */}
             <div className="text-right">
-              <div className="text-sm text-gray-400">Progress</div>
+              <div className="flex items-center space-x-2 mb-1">
+                <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
+                <span className="text-sm text-neon-green font-mono">AI ONLINE</span>
+              </div>
               <div className="flex items-center space-x-2">
-                <div className="w-24 bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-                <span className="text-sm text-white font-medium">{Math.round(progress)}%</span>
+                <div className="w-2 h-2 bg-neon-teal rounded-full animate-pulse"></div>
+                <span className="text-sm text-neon-teal font-mono">TRACKING ACTIVE</span>
               </div>
             </div>
           </div>
@@ -226,52 +300,124 @@ Ready to begin? What would you like to start with today?`;
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex bg-gray-900 rounded-b-2xl overflow-hidden">
-        {/* Learning Plan Sidebar */}
-        <div className="w-1/3 bg-gray-800 p-6 overflow-y-auto border-r border-gray-700">
-          <h2 className="text-xl font-bold text-white mb-4">📚 Learning Plan</h2>
+      <div className="flex-1 flex bg-dark-bg overflow-hidden">
+        {/* Learning Content Sidebar */}
+        <div className="w-1/3 glass-card p-6 overflow-y-auto border-r border-neon-teal m-2 rounded-lg">
+          <h2 className="text-xl font-bold text-white mb-4 font-mono">
+            <span className="neon-text-teal">LEARNING MODULE</span>
+          </h2>
           
           {plan && (
-            <div className="space-y-4">
-              <div className="bg-gray-700 rounded-lg p-4">
-                <h3 className="font-semibold text-white mb-2">Current Topic</h3>
-                <p className="text-gray-300 text-sm">
-                  {plan.topic.replace('-', ' ').toUpperCase()}
+            <div className="space-y-6">
+              {/* Current Topic */}
+              <div className="glass-card p-4 border-neon-green">
+                <h3 className="font-semibold text-neon-green mb-2 font-mono">CURRENT TOPIC</h3>
+                <p className="text-white text-sm mb-2">
+                  {currentTopic?.title || plan.topic.replace('-', ' ').toUpperCase()}
                 </p>
-                <p className="text-gray-400 text-xs mt-1">
-                  Level: {plan.level} • Duration: {plan.duration_weeks} weeks
+                <p className="text-gray-300 text-xs mb-3">
+                  {currentTopic?.description || "Building foundational knowledge"}
                 </p>
+                <div className="flex items-center space-x-2">
+                  <div className="w-full bg-dark-border rounded-full h-2">
+                    <div 
+                      className="h-2 bg-neon-green rounded-full transition-all duration-500"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-neon-green text-xs font-mono">{progress}%</span>
+                </div>
+              </div>
+
+              {/* Video Player Simulation */}
+              <div className="glass-card p-4">
+                <h3 className="font-semibold text-white mb-3 font-mono">📹 VIDEO LESSON</h3>
+                <div className="video-player">
+                  <div className="bg-black h-32 flex items-center justify-center text-neon-teal text-4xl">
+                    {isVideoPlaying ? '⏸️' : '▶️'}
+                  </div>
+                  <div className="video-controls">
+                    <button 
+                      onClick={() => setIsVideoPlaying(!isVideoPlaying)}
+                      className="text-neon-teal hover:text-white"
+                    >
+                      {isVideoPlaying ? '⏸️' : '▶️'}
+                    </button>
+                    <div className="video-progress">
+                      <div 
+                        className="video-progress-fill"
+                        style={{ width: `${videoProgress}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-white text-sm font-mono">
+                      {Math.floor(videoProgress * 2.5 / 100)}:{Math.floor((videoProgress * 150 / 100) % 60).toString().padStart(2, '0')} / 2:30
+                    </span>
+                  </div>
+                </div>
               </div>
               
-              <div className="bg-gray-700 rounded-lg p-4">
-                <h3 className="font-semibold text-white mb-2">Quick Actions</h3>
+              {/* Quick Actions */}
+              <div className="glass-card p-4">
+                <h3 className="font-semibold text-white mb-3 font-mono">⚡ QUICK ACTIONS</h3>
                 <div className="space-y-2">
                   <button
                     onClick={() => updateProgress(Math.min(100, progress + 10))}
-                    className="w-full text-left px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded text-sm text-gray-300 transition-colors"
+                    className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all font-mono"
                   >
-                    ✓ Mark Section Complete
+                    ✓ MARK SECTION COMPLETE
                   </button>
                   <button
-                    onClick={() => setNewMessage("Can you quiz me on what we've learned?")}
-                    className="w-full text-left px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded text-sm text-gray-300 transition-colors"
+                    onClick={() => handleQuickAction('quiz')}
+                    className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all font-mono"
                   >
-                    🧠 Request a Quiz
+                    🧠 REQUEST QUIZ
                   </button>
                   <button
-                    onClick={() => setNewMessage("What should I focus on next?")}
-                    className="w-full text-left px-3 py-2 bg-gray-600 hover:bg-gray-500 rounded text-sm text-gray-300 transition-colors"
+                    onClick={() => handleQuickAction('demo')}
+                    className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all font-mono"
                   >
-                    🎯 Get Next Steps
+                    💻 REQUEST DEMO
+                  </button>
+                  <button
+                    onClick={() => handleQuickAction('next')}
+                    className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all font-mono"
+                  >
+                    🎯 GET NEXT STEPS
                   </button>
                 </div>
               </div>
 
+              {/* Terminal Simulator */}
+              <div className="glass-card p-4">
+                <h3 className="font-semibold text-white mb-3 font-mono">💻 PRACTICE TERMINAL</h3>
+                <div className="terminal h-32 overflow-y-auto">
+                  {terminalHistory.slice(-5).map((entry, index) => (
+                    <div key={index} className="mb-2">
+                      <div className="terminal-prompt">
+                        cybersec@lab:~$ <span className="terminal-command">{entry.command}</span>
+                      </div>
+                      <div className="text-neon-green text-xs">{entry.output}</div>
+                    </div>
+                  ))}
+                  <div className="flex items-center">
+                    <span className="terminal-prompt">cybersec@lab:~$ </span>
+                    <input
+                      type="text"
+                      value={terminalInput}
+                      onChange={(e) => setTerminalInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleTerminalCommand(terminalInput)}
+                      className="bg-transparent border-none outline-none text-white font-mono text-sm flex-1"
+                      placeholder="Type command..."
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Study Plan Preview */}
-              <div className="bg-gray-700 rounded-lg p-4 max-h-64 overflow-y-auto">
-                <h3 className="font-semibold text-white mb-2">Study Guide</h3>
-                <div className="text-xs text-gray-300 whitespace-pre-wrap">
-                  {plan.curriculum.substring(0, 500)}...
+              <div className="glass-card p-4 max-h-48 overflow-y-auto">
+                <h3 className="font-semibold text-white mb-2 font-mono">📚 STUDY GUIDE</h3>
+                <div className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
+                  {plan.curriculum.substring(0, 300)}...
                 </div>
               </div>
             </div>
@@ -290,29 +436,38 @@ Ready to begin? What would you like to start with today?`;
                 <div
                   className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-3 rounded-lg ${
                     message.sender === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-100'
+                      ? 'chat-bubble-user'
+                      : 'chat-bubble-ai'
                   }`}
                 >
                   {message.sender === 'ai' && (
                     <div className="flex items-center mb-2">
-                      <span className="text-blue-400 text-sm font-medium">🤖 AI Tutor</span>
+                      <span className="text-neon-green text-sm font-mono font-bold">🤖 CYBER TUTOR</span>
+                      <div className="ml-2 w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
                     </div>
                   )}
-                  <div className="text-sm whitespace-pre-wrap">{message.message}</div>
-                  <div className="text-xs opacity-70 mt-1">
+                  <div className="text-sm whitespace-pre-wrap font-mono">{message.message}</div>
+                  <div className="text-xs opacity-70 mt-2 font-mono">
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </div>
                 </div>
               </div>
             ))}
             
-            {sendingMessage && (
+            {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-gray-700 text-gray-100 px-4 py-3 rounded-lg">
+                <div className="chat-bubble-ai">
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400 mr-2"></div>
-                    <span className="text-sm">AI is thinking...</span>
+                    <span className="text-neon-green text-sm font-mono font-bold mr-2">🤖 CYBER TUTOR</span>
+                    <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
+                  </div>
+                  <div className="flex items-center mt-2">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-neon-green rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-neon-green rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-neon-green rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                    </div>
+                    <span className="text-sm ml-2 font-mono">Analyzing and generating response...</span>
                   </div>
                 </div>
               </div>
@@ -321,39 +476,50 @@ Ready to begin? What would you like to start with today?`;
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Questions */}
-          <div className="px-6 py-2 border-t border-gray-700">
+          {/* Quick Actions Bar */}
+          <div className="px-6 py-3 border-t border-dark-border">
             <div className="flex flex-wrap gap-2">
-              {quickQuestions.slice(0, 3).map((question, index) => (
+              {[
+                { action: 'explain', label: 'Explain Concept', icon: '🔍' },
+                { action: 'quiz', label: 'Quick Quiz', icon: '🧠' },
+                { action: 'demo', label: 'Show Demo', icon: '💻' },
+                { action: 'help', label: 'Get Help', icon: '❓' },
+                { action: 'summary', label: 'Summarize', icon: '📝' },
+              ].map((item) => (
                 <button
-                  key={index}
-                  onClick={() => setNewMessage(question)}
-                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-full transition-colors"
+                  key={item.action}
+                  onClick={() => handleQuickAction(item.action)}
+                  className="px-3 py-1 glass-card hover:bg-dark-card-hover text-neon-teal text-xs rounded-full transition-all font-mono"
                 >
-                  {question}
+                  {item.icon} {item.label}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Message Input */}
-          <div className="p-6 border-t border-gray-700">
+          <div className="p-6 border-t border-dark-border">
             <div className="flex space-x-4">
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="Ask your AI tutor anything..."
-                className="flex-1 px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ask your AI tutor anything about cybersecurity..."
+                className="flex-1 px-4 py-3 bg-dark-card border border-neon-teal rounded-lg text-white focus:ring-2 focus:ring-neon-teal focus:border-transparent font-mono"
               />
               <button
                 onClick={sendMessage}
                 disabled={!newMessage.trim() || sendingMessage}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="btn-neon px-6 py-3 font-bold"
               >
-                Send
+                {sendingMessage ? '⏳' : '🚀'} SEND
               </button>
+            </div>
+            
+            {/* Keyboard Shortcuts */}
+            <div className="mt-2 text-xs text-gray-400 font-mono text-center">
+              <span className="text-neon-teal">TIP:</span> Use /quiz, /explain, /demo, or /help for quick commands
             </div>
           </div>
         </div>
