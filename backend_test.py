@@ -503,6 +503,20 @@ def test_generate_learning_plan_with_assessment(assessment_result_id: str):
 def test_approve_learning_plan(plan_id: str):
     """Test the approve learning plan endpoint"""
     try:
+        print(f"Testing plan approval for plan ID: {plan_id}")
+        
+        # First, verify the plan exists
+        get_plan_response = requests.get(f"{API_BASE_URL}/learning-plans/{plan_id}", timeout=10)
+        if get_plan_response.status_code != 200:
+            print(f"Plan with ID {plan_id} not found: {get_plan_response.status_code} - {get_plan_response.text}")
+            return {
+                "success": False,
+                "status_code": get_plan_response.status_code,
+                "error": f"Plan not found: {get_plan_response.text}"
+            }
+        
+        # Now test the approval endpoint
+        print(f"Sending approval request for plan ID: {plan_id}")
         response = requests.post(
             f"{API_BASE_URL}/approve-learning-plan/{plan_id}?approved=true",
             timeout=10
