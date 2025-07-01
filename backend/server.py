@@ -98,7 +98,21 @@ class MockCollection:
     async def to_list(self, length):
         # This is an async method that returns the actual list
         collection_data = in_memory_db.get(self.collection_name, [])
-        return collection_data
+        
+        # Apply query filter if it exists
+        if hasattr(self, 'query') and self.query:
+            filtered_data = []
+            for item in collection_data:
+                match = True
+                for key, value in self.query.items():
+                    if key in item and item[key] != value:
+                        match = False
+                        break
+                if match:
+                    filtered_data.append(item)
+            return filtered_data[:length]
+        
+        return collection_data[:length]
             
     async def count_documents(self, query):
         collection_data = in_memory_db.get(self.collection_name, [])
