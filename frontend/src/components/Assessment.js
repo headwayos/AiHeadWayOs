@@ -72,6 +72,35 @@ const Assessment = ({ onAssessmentComplete, onBack, addNotification }) => {
     }
   };
 
+  const skipAssessment = async () => {
+    setLoading(true);
+    try {
+      // Generate a learning plan without assessment results
+      const response = await axios.post(`${API}/generate-learning-plan`, {
+        topic: setupData.topic,
+        level: setupData.level,
+        career_goal: setupData.career_goal,
+        skip_assessment: true,
+        user_preferences: {
+          current_role: setupData.current_role,
+          experience_years: setupData.experience_years
+        }
+      });
+      
+      const planData = response.data;
+      addNotification?.('Skipped assessment! Generated a general learning plan for you.', 'info');
+      
+      // Call the completion handler with the plan data
+      onAssessmentComplete?.(planData);
+      
+    } catch (error) {
+      console.error('Error generating learning plan:', error);
+      addNotification?.('Error generating learning plan', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAnswerChange = (questionId, answer) => {
     const timeSpentOnQuestion = Math.floor((Date.now() - questionStartTime) / 1000);
     setResponses(prev => {
