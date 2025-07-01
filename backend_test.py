@@ -358,7 +358,7 @@ def test_submit_assessment(assessment_id: str):
         return False
 
 def test_generate_learning_plan():
-    """Test the generate learning plan endpoint"""
+    """Test the enhanced generate learning plan endpoint with table of contents"""
     try:
         # Sample request data
         request_data = {
@@ -369,7 +369,7 @@ def test_generate_learning_plan():
             "user_background": "I have basic IT knowledge but new to cybersecurity"
         }
         
-        print(f"Sending learning plan request: {json.dumps(request_data, indent=2)}")
+        print(f"Sending enhanced learning plan request: {json.dumps(request_data, indent=2)}")
         
         response = requests.post(
             f"{API_BASE_URL}/generate-learning-plan",
@@ -389,10 +389,10 @@ def test_generate_learning_plan():
         data = response.json()
         
         # Check if the response contains the expected fields
-        expected_fields = ["success", "plan_id", "curriculum", "topic", "level", "duration_weeks"]
+        expected_fields = ["success", "plan_id", "curriculum", "topic", "level", "duration_weeks", "table_of_contents"]
         for field in expected_fields:
             if field not in data:
-                print(f"Generate learning plan response missing expected field '{field}': {data}")
+                print(f"Enhanced learning plan response missing expected field '{field}': {data}")
                 return False
         
         # Check if the plan_id is a valid UUID
@@ -416,16 +416,45 @@ def test_generate_learning_plan():
                 print(f"Expected section '{section}' not found in curriculum")
                 return False
         
-        print(f"Generated learning plan with ID: {data['plan_id']}")
+        # Check if table_of_contents has the expected structure
+        toc = data["table_of_contents"]
+        if not isinstance(toc, dict):
+            print(f"table_of_contents is not a dictionary: {toc}")
+            return False
+        
+        expected_toc_fields = ["chapters", "total_chapters", "total_estimated_time", "difficulty_level"]
+        for field in expected_toc_fields:
+            if field not in toc:
+                print(f"table_of_contents missing expected field '{field}': {toc}")
+                return False
+        
+        # Check if chapters is a list and has at least one chapter
+        if not isinstance(toc["chapters"], list) or len(toc["chapters"]) == 0:
+            print(f"chapters is not a list or is empty: {toc['chapters']}")
+            return False
+        
+        # Check the structure of the first chapter
+        first_chapter = toc["chapters"][0]
+        expected_chapter_fields = ["id", "number", "title", "sections"]
+        for field in expected_chapter_fields:
+            if field not in first_chapter:
+                print(f"Chapter missing expected field '{field}': {first_chapter}")
+                return False
+        
+        print(f"Generated enhanced learning plan with ID: {data['plan_id']}")
+        print(f"Table of Contents: {toc['total_chapters']} chapters, {toc['total_estimated_time']} minutes estimated time")
+        
         return {
             "success": True,
             "plan_id": data["plan_id"],
             "curriculum_length": len(data["curriculum"]),
             "topic": data["topic"],
-            "level": data["level"]
+            "level": data["level"],
+            "total_chapters": toc["total_chapters"],
+            "total_estimated_time": toc["total_estimated_time"]
         }
     except requests.exceptions.RequestException as e:
-        print(f"Generate learning plan request failed: {e}")
+        print(f"Generate enhanced learning plan request failed: {e}")
         return False
 
 def test_generate_learning_plan_with_assessment(assessment_result_id: str):
