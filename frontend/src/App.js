@@ -413,6 +413,26 @@ const PlanGeneration = ({
     }
   };
 
+  const approveTOC = async (approved) => {
+    if (!generatedPlan) return;
+    
+    try {
+      await axios.post(`${API}/approve-toc/${generatedPlan.plan_id}?approved=${approved}`);
+      if (approved) {
+        const updatedPlan = { ...generatedPlan, toc_approved: true };
+        setGeneratedPlan(updatedPlan);
+        addNotification('Table of contents approved! Continue to final plan review.', 'success');
+      } else {
+        setGeneratedPlan(null);
+        addNotification('Table of contents rejected. Generating new plan...', 'info');
+        generatePlan();
+      }
+    } catch (error) {
+      console.error('Error approving table of contents:', error);
+      addNotification('Error processing table of contents approval', 'error');
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header with flow context */}
