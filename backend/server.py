@@ -988,6 +988,239 @@ async def generate_with_ollama(prompt: str) -> str:
             logger.error(f"Unexpected error during generation: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Generation error: {str(e)}")
 
+def create_structured_learning_content(topic: str, level: str) -> Dict[str, Any]:
+    """Create structured learning content like shown in the screenshots"""
+    
+    # Create content based on topic - using React Hooks as example like in screenshots
+    if "network-security" in topic.lower():
+        return create_network_security_content()
+    elif "ethical-hacking" in topic.lower():
+        return create_ethical_hacking_content()
+    else:
+        # Default to network security structure
+        return create_network_security_content()
+
+def create_network_security_content() -> Dict[str, Any]:
+    """Create network security learning content similar to the React Hooks example in screenshots"""
+    
+    table_of_contents = {
+        "chapters": [
+            {
+                "id": "1",
+                "number": 1,
+                "title": "INTRODUCTION TO NETWORK SECURITY FUNDAMENTALS",
+                "sections": [
+                    {"id": "1.1", "title": "What is Network Security?", "estimated_time": 15},
+                    {"id": "1.2", "title": "Basic Network Security Principles", "estimated_time": 20},
+                    {"id": "1.3", "title": "Network Security vs Traditional Security", "estimated_time": 10}
+                ]
+            },
+            {
+                "id": "2", 
+                "number": 2,
+                "title": "SYNTAX AND IMPLEMENTATION OF NETWORK SECURITY",
+                "sections": [
+                    {"id": "2.1", "title": "Introduction to Network Protocols", "estimated_time": 25},
+                    {"id": "2.2", "title": "Syntax of Security Configurations", "estimated_time": 30},
+                    {"id": "2.3", "title": "Network Security vs Perimeter Security", "estimated_time": 20}
+                ]
+            },
+            {
+                "id": "3",
+                "number": 3, 
+                "title": "ADVANTAGES OF NETWORK SECURITY OVER TRADITIONAL APPROACHES",
+                "sections": [
+                    {"id": "3.1", "title": "Introduction to Modern Network Security", "estimated_time": 20},
+                    {"id": "3.2", "title": "Comparison with Legacy Security", "estimated_time": 25},
+                    {"id": "3.3", "title": "Advantages of Network Security", "estimated_time": 15},
+                    {"id": "3.4", "title": "Quick Check", "estimated_time": 10}
+                ]
+            }
+        ],
+        "total_chapters": 3,
+        "total_estimated_time": 190,
+        "difficulty_level": "Beginner"
+    }
+    
+    chapters = [
+        {
+            "id": "1",
+            "chapter_number": 1,
+            "title": "INTRODUCTION TO NETWORK SECURITY FUNDAMENTALS", 
+            "description": "Learn the core concepts and principles that form the foundation of network security",
+            "sections": [
+                {
+                    "id": "1.1",
+                    "title": "What is Network Security?",
+                    "content": """Network security is the practice of protecting computer networks and their data from unauthorized access, misuse, or theft. Think of it as a digital fortress that safeguards your network infrastructure.
+
+**Key Components:**
+- **Firewalls** - Act as barriers between trusted and untrusted networks
+- **Intrusion Detection Systems (IDS)** - Monitor network traffic for suspicious activity  
+- **Access Controls** - Determine who can access what resources
+- **Encryption** - Scrambles data to make it unreadable to unauthorized users
+
+Network security is like having multiple layers of protection around your digital assets, much like a well-protected building has security guards, locked doors, cameras, and alarms.""",
+                    "code_examples": [
+                        """# Basic firewall rule example
+iptables -A INPUT -p tcp --dport 22 -s 192.168.1.0/24 -j ACCEPT
+iptables -A INPUT -p tcp --dport 22 -j DROP""",
+                        """# Network scanning with nmap
+nmap -sV -O target_ip
+nmap -sS -O target_ip/24"""
+                    ],
+                    "key_concepts": [
+                        "Network perimeter defense",
+                        "Defense in depth strategy", 
+                        "CIA Triad (Confidentiality, Integrity, Availability)",
+                        "Network segmentation"
+                    ],
+                    "resources": [
+                        {"type": "video", "title": "Network Security Fundamentals", "url": "#"},
+                        {"type": "blog", "title": "Understanding Network Perimeters", "url": "#"},
+                        {"type": "practice", "title": "Hands-on Lab: Basic Firewall Configuration", "url": "#"}
+                    ],
+                    "estimated_time": 15
+                },
+                {
+                    "id": "1.2", 
+                    "title": "Basic Network Security Principles",
+                    "content": """Here's the basic approach to implementing network security:
+
+**The Security Triad:**
+```
+[Confidentiality] ← → [Integrity] ← → [Availability]
+```
+
+- **Confidentiality**: Ensuring data is only accessible to authorized users
+- **Integrity**: Maintaining data accuracy and preventing unauthorized modifications  
+- **Availability**: Ensuring systems and data are accessible when needed
+
+**Core Principles:**
+1. **Least Privilege** - Users get minimum access needed for their role
+2. **Defense in Depth** - Multiple layers of security controls
+3. **Fail Secure** - Systems default to secure state when failures occur
+4. **Security by Design** - Built-in security from the ground up
+
+This setup is perfect for managing complex network security requirements, much like a well-organized security operation center.""",
+                    "code_examples": [
+                        """# Access Control List (ACL) example
+access-list 101 permit tcp 192.168.1.0 0.0.0.255 any eq 80
+access-list 101 permit tcp 192.168.1.0 0.0.0.255 any eq 443  
+access-list 101 deny ip any any""",
+                        """# Network segmentation example
+# DMZ network: 10.0.1.0/24
+# Internal network: 192.168.1.0/24
+# Guest network: 10.0.2.0/24"""
+                    ],
+                    "key_concepts": [
+                        "CIA Triad implementation",
+                        "Least privilege principle",
+                        "Network access controls", 
+                        "Security policies"
+                    ],
+                    "estimated_time": 20
+                }
+            ],
+            "estimated_time": 60,
+            "learning_objectives": [
+                "Understand core network security concepts",
+                "Identify key security principles",
+                "Recognize common security controls"
+            ]
+        }
+    ]
+    
+    return {
+        "table_of_contents": table_of_contents,
+        "chapters": chapters
+    }
+
+def create_ethical_hacking_content() -> Dict[str, Any]:
+    """Create ethical hacking learning content"""
+    
+    table_of_contents = {
+        "chapters": [
+            {
+                "id": "1",
+                "number": 1, 
+                "title": "INTRODUCTION TO ETHICAL HACKING FUNDAMENTALS",
+                "sections": [
+                    {"id": "1.1", "title": "What is Ethical Hacking?", "estimated_time": 15},
+                    {"id": "1.2", "title": "Legal and Ethical Considerations", "estimated_time": 20},
+                    {"id": "1.3", "title": "Penetration Testing vs Vulnerability Assessment", "estimated_time": 15}
+                ]
+            },
+            {
+                "id": "2",
+                "number": 2,
+                "title": "RECONNAISSANCE AND INFORMATION GATHERING", 
+                "sections": [
+                    {"id": "2.1", "title": "Passive Information Gathering", "estimated_time": 25},
+                    {"id": "2.2", "title": "Active Reconnaissance Techniques", "estimated_time": 30},
+                    {"id": "2.3", "title": "OSINT (Open Source Intelligence)", "estimated_time": 20}
+                ]
+            }
+        ],
+        "total_chapters": 2,
+        "total_estimated_time": 125,
+        "difficulty_level": "Intermediate"
+    }
+    
+    chapters = [
+        {
+            "id": "1",
+            "chapter_number": 1,
+            "title": "INTRODUCTION TO ETHICAL HACKING FUNDAMENTALS",
+            "description": "Learn the foundations of ethical hacking and penetration testing",
+            "sections": [
+                {
+                    "id": "1.1",
+                    "title": "What is Ethical Hacking?",
+                    "content": """Ethical hacking, also known as penetration testing or white-hat hacking, is the practice of intentionally probing systems for vulnerabilities in a legal and authorized manner.
+
+**Key Differences from Malicious Hacking:**
+- **Authorization** - Explicit permission from system owners
+- **Scope** - Clearly defined boundaries and limitations
+- **Intent** - Improve security rather than cause harm
+- **Disclosure** - Responsible reporting of findings
+
+**Types of Ethical Hackers:**
+1. **White Hat** - Authorized security professionals
+2. **Bug Bounty Hunters** - Independent researchers finding vulnerabilities
+3. **Internal Security Teams** - In-house penetration testers
+4. **Consultants** - External security assessment specialists""",
+                    "code_examples": [
+                        """# Basic network reconnaissance
+nmap -sn 192.168.1.0/24
+nmap -sV -sC target_ip""",
+                        """# Web application testing
+nikto -h http://target.com
+sqlmap -u "http://target.com/page?id=1" --dbs"""
+                    ],
+                    "key_concepts": [
+                        "Legal authorization requirements",
+                        "Rules of engagement",
+                        "Scope definition",
+                        "Responsible disclosure"
+                    ],
+                    "estimated_time": 15
+                }
+            ],
+            "estimated_time": 50,
+            "learning_objectives": [
+                "Understand ethical hacking principles",
+                "Learn legal requirements",
+                "Distinguish between ethical and malicious activities"
+            ]
+        }
+    ]
+    
+    return {
+        "table_of_contents": table_of_contents, 
+        "chapters": chapters
+    }
+
 # API Routes
 @api_router.get("/")
 async def root():
