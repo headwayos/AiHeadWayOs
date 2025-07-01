@@ -42,6 +42,23 @@ const LearningSession = ({ planId, onBack, addNotification }) => {
     scrollToBottom();
   }, [chatMessages]);
 
+  useEffect(() => {
+    // Track reading progress
+    const handleScroll = () => {
+      if (contentRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
+        const progress = Math.min(100, Math.round((scrollTop / (scrollHeight - clientHeight)) * 100));
+        setReadingProgress(progress);
+      }
+    };
+
+    const contentElement = contentRef.current;
+    if (contentElement) {
+      contentElement.addEventListener('scroll', handleScroll);
+      return () => contentElement.removeEventListener('scroll', handleScroll);
+    }
+  }, [chapterContent]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
