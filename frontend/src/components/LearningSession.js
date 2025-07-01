@@ -301,288 +301,358 @@ I'm watching your progress and ready to assist whenever you need! 📖✨`;
   }
 
   return (
-    <div className="max-w-full mx-auto h-screen flex flex-col bg-dark-bg">
-      {/* Header */}
-      <div className="glass-card rounded-t-2xl p-4 shadow-cyber-glow border-b border-neon-teal">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+    <div className="max-w-full mx-auto h-screen flex bg-dark-bg">
+      {/* Left Sidebar - Table of Contents */}
+      <div className={`${showTableOfContents ? 'w-80' : 'w-12'} transition-all duration-300 glass-card border-r border-neon-teal`}>
+        <div className="p-4 h-full flex flex-col">
+          <div className="flex items-center justify-between mb-4">
             <button
-              onClick={onBack}
-              className="text-gray-400 hover:text-neon-teal transition-colors"
+              onClick={() => setShowTableOfContents(!showTableOfContents)}
+              className="text-neon-teal hover:text-white transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              {showTableOfContents ? '◀' : '▶'}
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-white font-mono">
-                <span className="neon-text-teal">🤖 CYBER TUTOR</span> <span className="text-neon-green">ACTIVE</span>
-              </h1>
-              <p className="text-gray-300 font-mono text-sm">
-                {plan && plan.topic.replace('-', ' ').toUpperCase()} • SESSION TIME: {timeSpent}m
-              </p>
-            </div>
+            {showTableOfContents && (
+              <button
+                onClick={onBack}
+                className="text-gray-400 hover:text-neon-teal transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
           </div>
           
-          <div className="flex items-center space-x-6">
-            {/* Progress Ring */}
-            <div className="relative">
-              <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 100 100">
-                <circle
-                  cx="50" cy="50" r="40"
-                  stroke="currentColor" strokeWidth="8" fill="transparent"
-                  className="text-dark-border"
-                />
-                <circle
-                  cx="50" cy="50" r="40"
-                  stroke="currentColor" strokeWidth="8" fill="transparent"
-                  strokeDasharray={`${2 * Math.PI * 40}`}
-                  strokeDashoffset={`${2 * Math.PI * 40 * (1 - progress / 100)}`}
-                  className="text-neon-green transition-all duration-500"
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold text-neon-green font-mono">{Math.round(progress)}%</span>
+          {showTableOfContents && plan && (
+            <>
+              <h2 className="text-lg font-bold text-white mb-4 font-mono neon-text-teal">
+                📚 COURSE OUTLINE
+              </h2>
+              <div className="flex-1 overflow-y-auto space-y-2">
+                {plan.table_of_contents?.chapters?.map((chapter, index) => (
+                  <button
+                    key={chapter.id}
+                    onClick={() => handleChapterChange(chapter)}
+                    className={`w-full text-left p-3 rounded-lg transition-all font-mono text-sm ${
+                      currentChapter?.id === chapter.id
+                        ? 'bg-neon-teal bg-opacity-20 text-neon-teal border border-neon-teal'
+                        : 'text-gray-300 hover:bg-dark-card-hover hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-neon-green">{index + 1}.</span>
+                      <span className="flex-1">{chapter.title}</span>
+                      {currentChapter?.id === chapter.id && (
+                        <span className="text-xs text-neon-teal">●</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 ml-6">
+                      ⏱ {chapter.estimated_time || '15 min'}
+                    </div>
+                  </button>
+                ))}
               </div>
-            </div>
-            
-            {/* System Status */}
-            <div className="text-right">
-              <div className="flex items-center space-x-2 mb-1">
-                <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-                <span className="text-sm text-neon-green font-mono">AI ONLINE</span>
+              
+              {/* Progress Summary */}
+              <div className="mt-4 p-3 glass-card border border-neon-green">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-mono text-neon-green">PROGRESS</span>
+                  <span className="text-sm font-mono text-white">{Math.round(progress)}%</span>
+                </div>
+                <div className="w-full bg-dark-border rounded-full h-2">
+                  <div 
+                    className="h-2 bg-neon-green rounded-full transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <div className="text-xs text-gray-400 mt-2 font-mono">
+                  Session time: {timeSpent}m • Reading: {readingProgress}%
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-neon-teal rounded-full animate-pulse"></div>
-                <span className="text-sm text-neon-teal font-mono">TRACKING ACTIVE</span>
-              </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex bg-dark-bg overflow-hidden">
-        {/* Learning Content Sidebar */}
-        <div className="w-1/3 glass-card p-6 overflow-y-auto border-r border-neon-teal m-2 rounded-lg">
-          <h2 className="text-xl font-bold text-white mb-4 font-mono">
-            <span className="neon-text-teal">LEARNING MODULE</span>
-          </h2>
-          
-          {plan && (
-            <div className="space-y-6">
-              {/* Current Topic */}
-              <div className="glass-card p-4 border-neon-green">
-                <h3 className="font-semibold text-neon-green mb-2 font-mono">CURRENT TOPIC</h3>
-                <p className="text-white text-sm mb-2">
-                  {currentTopic?.title || plan.topic.replace('-', ' ').toUpperCase()}
-                </p>
-                <p className="text-gray-300 text-xs mb-3">
-                  {currentTopic?.description || "Building foundational knowledge"}
-                </p>
-                <div className="flex items-center space-x-2">
-                  <div className="w-full bg-dark-border rounded-full h-2">
-                    <div 
-                      className="h-2 bg-neon-green rounded-full transition-all duration-500"
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-neon-green text-xs font-mono">{progress}%</span>
-                </div>
-              </div>
-
-              {/* Video Player Simulation */}
-              <div className="glass-card p-4">
-                <h3 className="font-semibold text-white mb-3 font-mono">📹 VIDEO LESSON</h3>
-                <div className="video-player">
-                  <div className="bg-black h-32 flex items-center justify-center text-neon-teal text-4xl">
-                    {isVideoPlaying ? '⏸️' : '▶️'}
-                  </div>
-                  <div className="video-controls">
-                    <button 
-                      onClick={() => setIsVideoPlaying(!isVideoPlaying)}
-                      className="text-neon-teal hover:text-white"
-                    >
-                      {isVideoPlaying ? '⏸️' : '▶️'}
-                    </button>
-                    <div className="video-progress">
-                      <div 
-                        className="video-progress-fill"
-                        style={{ width: `${videoProgress}%` }}
-                      ></div>
-                    </div>
-                    <span className="text-white text-sm font-mono">
-                      {Math.floor(videoProgress * 2.5 / 100)}:{Math.floor((videoProgress * 150 / 100) % 60).toString().padStart(2, '0')} / 2:30
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Quick Actions */}
-              <div className="glass-card p-4">
-                <h3 className="font-semibold text-white mb-3 font-mono">⚡ QUICK ACTIONS</h3>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => updateProgress(Math.min(100, progress + 10))}
-                    className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all font-mono"
-                  >
-                    ✓ MARK SECTION COMPLETE
-                  </button>
-                  <button
-                    onClick={() => handleQuickAction('quiz')}
-                    className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all font-mono"
-                  >
-                    🧠 REQUEST QUIZ
-                  </button>
-                  <button
-                    onClick={() => handleQuickAction('demo')}
-                    className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all font-mono"
-                  >
-                    💻 REQUEST DEMO
-                  </button>
-                  <button
-                    onClick={() => handleQuickAction('next')}
-                    className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all font-mono"
-                  >
-                    🎯 GET NEXT STEPS
-                  </button>
-                </div>
-              </div>
-
-              {/* Terminal Simulator */}
-              <div className="glass-card p-4">
-                <h3 className="font-semibold text-white mb-3 font-mono">💻 PRACTICE TERMINAL</h3>
-                <div className="terminal h-32 overflow-y-auto">
-                  {terminalHistory.slice(-5).map((entry, index) => (
-                    <div key={index} className="mb-2">
-                      <div className="terminal-prompt">
-                        cybersec@lab:~$ <span className="terminal-command">{entry.command}</span>
-                      </div>
-                      <div className="text-neon-green text-xs">{entry.output}</div>
-                    </div>
-                  ))}
-                  <div className="flex items-center">
-                    <span className="terminal-prompt">cybersec@lab:~$ </span>
-                    <input
-                      type="text"
-                      value={terminalInput}
-                      onChange={(e) => setTerminalInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleTerminalCommand(terminalInput)}
-                      className="bg-transparent border-none outline-none text-white font-mono text-sm flex-1"
-                      placeholder="Type command..."
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Study Plan Preview */}
-              <div className="glass-card p-4 max-h-48 overflow-y-auto">
-                <h3 className="font-semibold text-white mb-2 font-mono">📚 STUDY GUIDE</h3>
-                <div className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
-                  {plan.curriculum.substring(0, 300)}...
-                </div>
+      {/* Main Content Area - MDN Style Documentation */}
+      <div className="flex-1 flex flex-col bg-dark-bg">
+        {/* Header */}
+        <div className="glass-card p-4 border-b border-dark-border">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div>
+                <h1 className="text-xl font-bold text-white font-mono">
+                  {chapterContent ? (
+                    <>
+                      <span className="neon-text-teal">📖</span> {chapterContent.title}
+                    </>
+                  ) : (
+                    <>
+                      <span className="neon-text-teal">🤖 CYBER TUTOR</span> <span className="text-neon-green">LOADING</span>
+                    </>
+                  )}
+                </h1>
+                {chapterContent && (
+                  <p className="text-gray-400 text-sm font-mono">
+                    {plan?.topic.replace('-', ' ').toUpperCase()} • {chapterContent.estimated_time || '15 min'} read
+                  </p>
+                )}
               </div>
             </div>
-          )}
+            
+            <div className="flex items-center space-x-4">
+              {/* AI Assistant Status */}
+              <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-mono ${
+                aiAssistantMode === 'active' ? 'bg-neon-green bg-opacity-20 text-neon-green' :
+                aiAssistantMode === 'waiting' ? 'bg-neon-teal bg-opacity-20 text-neon-teal' :
+                'bg-gray-600 bg-opacity-20 text-gray-400'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  aiAssistantMode === 'active' ? 'bg-neon-green animate-pulse' :
+                  aiAssistantMode === 'waiting' ? 'bg-neon-teal animate-pulse' :
+                  'bg-gray-400'
+                }`}></div>
+                <span>
+                  AI {aiAssistantMode === 'active' ? 'ACTIVE' : aiAssistantMode === 'waiting' ? 'READY' : 'OFFLINE'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Chat Interface */}
-        <div className="flex-1 flex flex-col">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {chatMessages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-xs lg:max-w-md xl:max-w-lg px-4 py-3 rounded-lg ${
-                    message.sender === 'user'
-                      ? 'chat-bubble-user'
-                      : 'chat-bubble-ai'
-                  }`}
-                >
-                  {message.sender === 'ai' && (
-                    <div className="flex items-center mb-2">
-                      <span className="text-neon-green text-sm font-mono font-bold">🤖 CYBER TUTOR</span>
-                      <div className="ml-2 w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
+        {/* Content + AI Assistant Layout */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Chapter Content - MDN Style */}
+          <div className="flex-1 overflow-y-auto" ref={contentRef}>
+            {chapterContent ? (
+              <div className="max-w-4xl mx-auto p-8">
+                {/* Article Header */}
+                <article className="prose prose-invert prose-lg max-w-none">
+                  <header className="mb-8">
+                    <h1 className="text-4xl font-bold text-white mb-4 font-mono neon-text-teal">
+                      {chapterContent.title}
+                    </h1>
+                    <div className="flex items-center space-x-6 text-sm text-gray-400 mb-6">
+                      <span className="flex items-center space-x-2">
+                        <span>⏱</span>
+                        <span>{chapterContent.estimated_time || '15 min'} read</span>
+                      </span>
+                      <span className="flex items-center space-x-2">
+                        <span>📊</span>
+                        <span>Difficulty: {chapterContent.difficulty_level || 'Intermediate'}</span>
+                      </span>
+                      <span className="flex items-center space-x-2">
+                        <span>🎯</span>
+                        <span>Progress: {readingProgress}%</span>
+                      </span>
                     </div>
-                  )}
-                  <div className="text-sm whitespace-pre-wrap font-mono">{message.message}</div>
-                  <div className="text-xs opacity-70 mt-2 font-mono">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </div>
-                </div>
+                    <p className="text-xl text-gray-300 leading-relaxed">
+                      {chapterContent.description}
+                    </p>
+                  </header>
+
+                  {/* Chapter Sections */}
+                  {chapterContent.sections?.map((section, index) => (
+                    <section key={index} className="mb-12">
+                      <h2 className="text-2xl font-bold text-white mb-4 font-mono text-neon-green border-l-4 border-neon-green pl-4">
+                        {section.title}
+                      </h2>
+                      
+                      <div className="space-y-6">
+                        {/* Section Content */}
+                        <div className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                          {section.content}
+                        </div>
+
+                        {/* Code Examples */}
+                        {section.code_example && (
+                          <div className="my-6">
+                            <h3 className="text-lg font-semibold text-neon-teal mb-2 font-mono">💻 Code Example:</h3>
+                            <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+                              <pre className="text-sm text-gray-300 overflow-x-auto">
+                                <code>{section.code_example}</code>
+                              </pre>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Practice Exercise */}
+                        {section.practice_exercise && (
+                          <div className="my-6 p-4 glass-card border-l-4 border-neon-teal">
+                            <h3 className="text-lg font-semibold text-neon-teal mb-2 font-mono">🎯 Practice Exercise:</h3>
+                            <p className="text-gray-300">{section.practice_exercise}</p>
+                          </div>
+                        )}
+
+                        {/* Key Points */}
+                        {section.key_points && (
+                          <div className="my-6 p-4 glass-card border-l-4 border-neon-green">
+                            <h3 className="text-lg font-semibold text-neon-green mb-2 font-mono">🔑 Key Points:</h3>
+                            <ul className="space-y-2">
+                              {section.key_points.map((point, idx) => (
+                                <li key={idx} className="text-gray-300 flex items-start space-x-2">
+                                  <span className="text-neon-green mt-1">•</span>
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  ))}
+
+                  {/* Chapter Navigation */}
+                  <footer className="mt-12 pt-8 border-t border-dark-border">
+                    <div className="flex justify-between items-center">
+                      <button
+                        onClick={() => updateProgress(Math.min(100, progress + 25))}
+                        className="btn-neon px-6 py-3 font-mono"
+                      >
+                        ✓ MARK COMPLETE
+                      </button>
+                      
+                      <div className="flex space-x-4">
+                        <button
+                          onClick={() => handleQuickAction('quiz')}
+                          className="px-4 py-2 glass-card hover:bg-dark-card-hover text-neon-teal rounded-lg transition-all font-mono text-sm"
+                        >
+                          🧠 Test Knowledge
+                        </button>
+                        <button
+                          onClick={() => handleQuickAction('explain')}
+                          className="px-4 py-2 glass-card hover:bg-dark-card-hover text-neon-green rounded-lg transition-all font-mono text-sm"
+                        >
+                          🔍 Ask AI
+                        </button>
+                      </div>
+                    </div>
+                  </footer>
+                </article>
               </div>
-            ))}
-            
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="chat-bubble-ai">
-                  <div className="flex items-center">
-                    <span className="text-neon-green text-sm font-mono font-bold mr-2">🤖 CYBER TUTOR</span>
-                    <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-                  </div>
-                  <div className="flex items-center mt-2">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-neon-green rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-neon-green rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                      <div className="w-2 h-2 bg-neon-green rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                    </div>
-                    <span className="text-sm ml-2 font-mono">Analyzing and generating response...</span>
-                  </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-neon-teal mb-4 mx-auto"></div>
+                  <p className="text-neon-teal font-mono text-lg">LOADING CHAPTER CONTENT...</p>
                 </div>
               </div>
             )}
-            
-            <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Actions Bar */}
-          <div className="px-6 py-3 border-t border-dark-border">
-            <div className="flex flex-wrap gap-2">
-              {[
-                { action: 'explain', label: 'Explain Concept', icon: '🔍' },
-                { action: 'quiz', label: 'Quick Quiz', icon: '🧠' },
-                { action: 'demo', label: 'Show Demo', icon: '💻' },
-                { action: 'help', label: 'Get Help', icon: '❓' },
-                { action: 'summary', label: 'Summarize', icon: '📝' },
-              ].map((item) => (
-                <button
-                  key={item.action}
-                  onClick={() => handleQuickAction(item.action)}
-                  className="px-3 py-1 glass-card hover:bg-dark-card-hover text-neon-teal text-xs rounded-full transition-all font-mono"
-                >
-                  {item.icon} {item.label}
-                </button>
+          {/* Right Sidebar - AI Assistant */}
+          <div className="w-96 glass-card border-l border-neon-teal flex flex-col">
+            {/* AI Assistant Header */}
+            <div className="p-4 border-b border-dark-border">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-white font-mono">
+                  <span className="neon-text-teal">🤖 AI ASSISTANT</span>
+                </h3>
+                <div className={`flex items-center space-x-2 text-xs font-mono ${
+                  aiAssistantMode === 'waiting' ? 'text-neon-teal' : 'text-neon-green'
+                }`}>
+                  <div className={`w-2 h-2 rounded-full animate-pulse ${
+                    aiAssistantMode === 'waiting' ? 'bg-neon-teal' : 'bg-neon-green'
+                  }`}></div>
+                  <span>{aiAssistantMode === 'waiting' ? 'WAITING' : 'ACTIVE'}</span>
+                </div>
+              </div>
+              {aiAssistantMode === 'waiting' && (
+                <p className="text-xs text-gray-400 mt-2 font-mono">
+                  I'm here when you need help with the content! 📚
+                </p>
+              )}
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {chatMessages.map((message) => (
+                <div key={message.id} className={`${
+                  message.sender === 'user' ? 'ml-4' : message.sender === 'system' ? '' : 'mr-4'
+                }`}>
+                  <div className={`p-3 rounded-lg text-sm font-mono ${
+                    message.sender === 'user' 
+                      ? 'bg-neon-teal bg-opacity-20 text-white ml-auto max-w-xs'
+                      : message.sender === 'system'
+                      ? 'bg-neon-green bg-opacity-10 text-neon-green text-center text-xs'
+                      : 'bg-dark-card text-gray-300'
+                  }`}>
+                    {message.sender === 'ai' && (
+                      <div className="flex items-center mb-2">
+                        <span className="text-neon-teal text-xs font-bold">🤖 TUTOR</span>
+                        <div className="ml-2 w-1 h-1 bg-neon-teal rounded-full animate-pulse"></div>
+                      </div>
+                    )}
+                    <div className="whitespace-pre-wrap">{message.message}</div>
+                    <div className="text-xs opacity-70 mt-2">
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
               ))}
+              
+              {isTyping && (
+                <div className="mr-4">
+                  <div className="bg-dark-card p-3 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <span className="text-neon-teal text-xs font-bold font-mono">🤖 TUTOR</span>
+                      <div className="ml-2 w-1 h-1 bg-neon-teal rounded-full animate-pulse"></div>
+                    </div>
+                    <div className="flex items-center">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-neon-teal rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-neon-teal rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-2 h-2 bg-neon-teal rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
+                      <span className="text-xs ml-2 font-mono text-gray-400">Thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} />
             </div>
-          </div>
 
-          {/* Message Input */}
-          <div className="p-6 border-t border-dark-border">
-            <div className="flex space-x-4">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="Ask your AI tutor anything about cybersecurity..."
-                className="flex-1 px-4 py-3 bg-dark-card border border-neon-teal rounded-lg text-white focus:ring-2 focus:ring-neon-teal focus:border-transparent font-mono"
-              />
-              <button
-                onClick={sendMessage}
-                disabled={!newMessage.trim() || sendingMessage}
-                className="btn-neon px-6 py-3 font-bold"
-              >
-                {sendingMessage ? '⏳' : '🚀'} SEND
-              </button>
+            {/* Quick Actions */}
+            <div className="p-3 border-t border-dark-border">
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {[
+                  { action: 'explain', label: 'Explain', icon: '🔍' },
+                  { action: 'quiz', label: 'Quiz Me', icon: '🧠' },
+                  { action: 'demo', label: 'Demo', icon: '💻' },
+                  { action: 'help', label: 'Help', icon: '❓' },
+                ].map((item) => (
+                  <button
+                    key={item.action}
+                    onClick={() => handleQuickAction(item.action)}
+                    className="px-2 py-1 glass-card hover:bg-dark-card-hover text-neon-teal text-xs rounded transition-all font-mono"
+                  >
+                    {item.icon} {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            
-            {/* Keyboard Shortcuts */}
-            <div className="mt-2 text-xs text-gray-400 font-mono text-center">
-              <span className="text-neon-teal">TIP:</span> Use /quiz, /explain, /demo, or /help for quick commands
+
+            {/* Message Input */}
+            <div className="p-4 border-t border-dark-border">
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                  placeholder="Ask me anything about this chapter..."
+                  className="flex-1 px-3 py-2 bg-dark-card border border-gray-600 rounded text-white text-sm focus:ring-2 focus:ring-neon-teal focus:border-transparent font-mono"
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim() || sendingMessage}
+                  className="px-3 py-2 bg-neon-teal bg-opacity-20 hover:bg-opacity-30 text-neon-teal rounded transition-all text-sm font-mono"
+                >
+                  {sendingMessage ? '⏳' : '🚀'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
