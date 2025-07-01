@@ -413,7 +413,7 @@ const PlanGeneration = ({
     }
   };
 
-
+  return (
     <div className="max-w-7xl mx-auto">
       {/* Header with flow context */}
       <div className="text-center mb-8">
