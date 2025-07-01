@@ -173,12 +173,19 @@ I'm watching your progress and ready to assist whenever you need! 📖✨`;
     setChatMessages(prev => [...prev, userMessage]);
     setSendingMessage(true);
     setIsTyping(true);
+    setAiAssistantMode('active'); // AI becomes active when user asks something
     
     const messageToSend = newMessage;
     setNewMessage('');
 
     try {
-      const response = await axios.post(`${API}/chat-with-ai?session_id=${session.session_id}&message=${encodeURIComponent(messageToSend)}`);
+      // Add context about current chapter to the message
+      let contextualMessage = messageToSend;
+      if (chapterContent) {
+        contextualMessage = `[Currently reading: ${chapterContent.title}] ${messageToSend}`;
+      }
+
+      const response = await axios.post(`${API}/chat-with-ai?session_id=${session.session_id}&message=${encodeURIComponent(contextualMessage)}`);
       
       // Simulate typing delay
       setTimeout(() => {
@@ -193,6 +200,9 @@ I'm watching your progress and ready to assist whenever you need! 📖✨`;
         };
         
         setChatMessages(prev => [...prev, aiMessage]);
+        
+        // Return to waiting mode after responding
+        setTimeout(() => setAiAssistantMode('waiting'), 3000);
       }, 1500);
       
     } catch (error) {
@@ -211,6 +221,22 @@ I'm watching your progress and ready to assist whenever you need! 📖✨`;
     } finally {
       setSendingMessage(false);
     }
+  };
+
+  const handleChapterChange = async (chapter) => {
+    setCurrentChapter(chapter);
+    await loadChapterContent(chapter.id);
+    
+    // Notify AI about chapter change
+    const contextMessage = {
+      id: Date.now().toString(),
+      session_id: session.session_id,
+      sender: 'system',
+      message: `📖 Now reading: **${chapter.title}** - I'm here when you need help!`,
+      timestamp: new Date().toISOString(),
+      message_type: 'system'
+    };
+    setChatMessages(prev => [...prev, contextMessage]);
   };
 
   const updateProgress = async (newProgress) => {
