@@ -222,6 +222,9 @@ class LearningPlanRequest(BaseModel):
     include_certifications: bool = Field(default=True)
     user_background: Optional[str] = Field(default="")
     assessment_result_id: Optional[str] = None  # Link to assessment result for personalization
+    skip_assessment: Optional[bool] = Field(default=False)  # Flag for skipped assessment
+    career_goal: Optional[str] = Field(default="")  # Career goal when assessment is skipped
+    user_preferences: Optional[Dict[str, Any]] = Field(default_factory=dict)  # Additional user data
 
 # New structured content models
 class ChapterSection(BaseModel):
