@@ -75,6 +75,13 @@ const LearningSession = ({ planId, onBack, addNotification }) => {
       const sessionResponse = await axios.post(`${API}/start-learning-session?plan_id=${planId}&user_id=anonymous`);
       setSession(sessionResponse.data);
       
+      // Load first chapter content
+      if (planResponse.data.table_of_contents && planResponse.data.table_of_contents.chapters.length > 0) {
+        const firstChapter = planResponse.data.table_of_contents.chapters[0];
+        await loadChapterContent(firstChapter.id);
+        setCurrentChapter(firstChapter);
+      }
+      
       // Load chat history
       await loadChatHistory(sessionResponse.data.session_id);
       
@@ -83,18 +90,23 @@ const LearningSession = ({ planId, onBack, addNotification }) => {
         await sendWelcomeMessage(sessionResponse.data.session_id, planResponse.data);
       }
       
-      // Initialize current topic
-      setCurrentTopic({
-        title: "Introduction to " + planResponse.data.topic.replace('-', ' ').toUpperCase(),
-        description: "Let's start with the fundamentals and build your knowledge step by step.",
-        completed: false
-      });
-      
     } catch (error) {
       console.error('Error starting learning session:', error);
       addNotification?.('Error starting learning session', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadChapterContent = async (chapterId) => {
+    try {
+      const response = await axios.get(`${API}/learning-plans/${planId}/chapter/${chapterId}`);
+      setChapterContent(response.data);
+      setReadingProgress(0);
+      setAiAssistantMode('waiting'); // AI waits while user reads
+    } catch (error) {
+      console.error('Error loading chapter content:', error);
+      addNotification?.('Error loading chapter content', 'error');
     }
   };
 
