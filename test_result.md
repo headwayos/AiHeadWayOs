@@ -149,6 +149,45 @@ backend:
         - working: true
         - agent: "testing"
         - comment: "Enhanced Learning Plan Generation API is working correctly. Successfully integrates assessment results for personalized learning plan generation."
+        - working: true
+        - agent: "testing"
+        - comment: "Enhanced Learning Plan Generation API now returns table_of_contents field in response as required. The table of contents includes chapters, total_chapters, total_estimated_time, and difficulty_level fields."
+
+  - task: "Table of Contents Approval"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "New table of contents approval endpoint (/api/approve-toc/{plan_id}) is working correctly. Successfully approves table of contents and returns the expected response with toc_approved field."
+
+  - task: "Chapter Content Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "New chapter content endpoint (/api/learning-plans/{plan_id}/chapter/{chapter_id}) is working correctly. Returns detailed chapter content including title, description, sections, and estimated_time."
+
+  - task: "Section Content Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "New section content endpoint (/api/learning-plans/{plan_id}/section/{section_id}) is working correctly. Returns detailed section content including title, content, and estimated_time."
 
   - task: "Plan Approval Workflow"
     implemented: true
