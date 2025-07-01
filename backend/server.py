@@ -1586,13 +1586,33 @@ Keep responses concise but informative. If the student asks about a specific top
 async def get_chat_history(session_id: str, limit: int = 50):
     """Get chat history for a learning session"""
     
-    cursor = db.chat_messages.find({"session_id": session_id}).sort("timestamp", 1).limit(limit)
+    # Get messages without sorting in the database
+    cursor = db.chat_messages.find({"session_id": session_id}).limit(limit)
     messages = await cursor.to_list(length=limit)
     
     # Remove MongoDB _id from all messages
     for message in messages:
         if "_id" in message:
             message.pop("_id", None)
+    
+    # Sort messages by timestamp in Python
+    # This works around the issue with MockCollection.sort() not actually sorting
+    try:
+        # Convert string timestamps to datetime objects for proper sorting
+        for msg in messages:
+            if isinstance(msg.get("timestamp"), str):
+                msg["timestamp"] = datetime.fromisoformat(msg["timestamp"].replace("Z", "+00:00"))
+        
+        # Sort messages by timestamp
+        messages = sorted(messages, key=lambda x: x.get("timestamp", datetime.min))
+        
+        # Convert datetime objects back to strings for JSON serialization
+        for msg in messages:
+            if isinstance(msg.get("timestamp"), datetime):
+                msg["timestamp"] = msg["timestamp"].isoformat()
+    except Exception as e:
+        logger.warning(f"Error sorting chat messages: {str(e)}")
+        # Continue with unsorted messages if sorting fails
     
     return {
         "session_id": session_id,
