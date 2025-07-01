@@ -2,14 +2,26 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Assessment from './components/Assessment';
 import LearningSession from './components/LearningSession';
+import CareerCanvas from './components/CareerCanvas';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// User Flow Steps
+const FLOW_STEPS = {
+  WELCOME: 'welcome',
+  ASSESSMENT: 'assessment',
+  CAREER_CANVAS: 'career-canvas',
+  PLAN_GENERATION: 'plan-generation',
+  DASHBOARD: 'dashboard',
+  LEARNING: 'learning'
+};
+
 // Main App Component
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [currentFlow, setCurrentFlow] = useState(FLOW_STEPS.WELCOME);
+  const [flowData, setFlowData] = useState({});
   const [topics, setTopics] = useState({});
   const [levels, setLevels] = useState({});
   const [focusAreas, setFocusAreas] = useState([]);
@@ -18,11 +30,31 @@ function App() {
   const [userProgress, setUserProgress] = useState(null);
   const [currentPlanId, setCurrentPlanId] = useState(null);
   const [notifications, setNotifications] = useState([]);
+  const [careerCanvasData, setCareerCanvasData] = useState(null);
 
   useEffect(() => {
     fetchTopicsAndLevels();
     fetchUserProgress();
+    // Check if user has previous session data
+    const savedFlow = localStorage.getItem('cyberlearn_flow');
+    if (savedFlow) {
+      try {
+        const flowState = JSON.parse(savedFlow);
+        setCurrentFlow(flowState.step || FLOW_STEPS.WELCOME);
+        setFlowData(flowState.data || {});
+      } catch (e) {
+        console.error('Error loading saved flow:', e);
+      }
+    }
   }, []);
+
+  // Save flow state to localStorage
+  useEffect(() => {
+    localStorage.setItem('cyberlearn_flow', JSON.stringify({
+      step: currentFlow,
+      data: flowData
+    }));
+  }, [currentFlow, flowData]);
 
   const fetchTopicsAndLevels = async () => {
     try {
@@ -55,122 +87,111 @@ function App() {
     }, 5000);
   };
 
-  const handleAssessmentComplete = (result) => {
-    setAssessmentResult(result);
-    setActiveTab('generate');
-    fetchUserProgress();
-    addNotification('Assessment completed! Ready to generate your personalized plan.', 'success');
+  const moveToNextFlow = (step, data = {}) => {
+    setFlowData(prev => ({ ...prev, ...data }));
+    setCurrentFlow(step);
   };
 
-  const handleBackToDashboard = () => {
-    setActiveTab('dashboard');
-    setAssessmentResult(null);
-    setCurrentPlanId(null);
+  const handleAssessmentComplete = (result) => {
+    setAssessmentResult(result);
+    setFlowData(prev => ({ ...prev, assessmentResult: result }));
+    moveToNextFlow(FLOW_STEPS.CAREER_CANVAS);
+    fetchUserProgress();
+    addNotification('Assessment completed! Now let\'s create your career canvas.', 'success');
+  };
+
+  const handleCareerCanvasComplete = (canvasData) => {
+    setCareerCanvasData(canvasData);
+    setFlowData(prev => ({ ...prev, careerCanvas: canvasData }));
+    moveToNextFlow(FLOW_STEPS.PLAN_GENERATION);
+    addNotification('Career canvas created! Ready to generate your personalized learning plan.', 'success');
+  };
+
+  const handlePlanGenerated = (planData) => {
+    setFlowData(prev => ({ ...prev, generatedPlan: planData }));
+    moveToNextFlow(FLOW_STEPS.DASHBOARD);
+    addNotification('Learning plan generated! Welcome to your dashboard.', 'success');
   };
 
   const handleStartLearning = (planId) => {
     setCurrentPlanId(planId);
-    setActiveTab('learning');
+    moveToNextFlow(FLOW_STEPS.LEARNING);
     addNotification('Learning session started! Your AI tutor is ready.', 'success');
+  };
+
+  const resetFlow = () => {
+    setCurrentFlow(FLOW_STEPS.WELCOME);
+    setFlowData({});
+    setAssessmentResult(null);
+    setCareerCanvasData(null);
+    setCurrentPlanId(null);
+    localStorage.removeItem('cyberlearn_flow');
+    addNotification('Flow reset! Starting from the beginning.', 'info');
   };
 
   return (
     <div className="min-h-screen bg-dark-bg relative overflow-hidden">
-      {/* Matrix Background Effect */}
-      <div className="matrix-bg absolute inset-0 bg-matrix-gradient"></div>
+      {/* Subtle Matrix Background Effect */}
+      <div className="matrix-bg absolute inset-0"></div>
+      
+      {/* Flow Navigation */}
+      {currentFlow !== FLOW_STEPS.LEARNING && (
+        <FlowNavigation currentFlow={currentFlow} onStepClick={setCurrentFlow} />
+      )}
       
       {/* Notifications */}
       <NotificationContainer notifications={notifications} />
       
       <div className="container mx-auto px-4 py-8 relative z-10">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold text-white mb-4 animate-glow-text">
-            🛡️ <span className="neon-text-teal">CYBER</span><span className="neon-text-green">SEC</span> Hub
-          </h1>
-          <div className="text-2xl text-neon-teal font-mono mb-2">
-            [ AI-POWERED SECURITY TRAINING PLATFORM ]
-          </div>
-          <p className="text-lg text-gray-300 max-w-4xl mx-auto">
-            Master cybersecurity with personalized AI tutoring, real-time assessments, and hands-on practice
-          </p>
-          <div className="flex justify-center items-center mt-4 space-x-4">
-            <div className="w-2 h-2 bg-neon-teal rounded-full animate-pulse"></div>
-            <div className="text-sm text-neon-green font-mono">SYSTEM ONLINE</div>
-            <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Navigation - only show if not in learning session */}
-        {activeTab !== 'learning' && (
-          <div className="flex justify-center mb-8">
-            <div className="glass-card p-2 flex space-x-2">
-              <NavButton
-                active={activeTab === 'dashboard'}
-                onClick={() => setActiveTab('dashboard')}
-                icon="🏠"
-                label="DASHBOARD"
-              />
-              <NavButton
-                active={activeTab === 'assessment'}
-                onClick={() => setActiveTab('assessment')}
-                icon="🎯"
-                label="ASSESSMENT"
-              />
-              <NavButton
-                active={activeTab === 'generate'}
-                onClick={() => setActiveTab('generate')}
-                icon="📋"
-                label="GENERATE PLAN"
-              />
-              <NavButton
-                active={activeTab === 'plans'}
-                onClick={() => setActiveTab('plans')}
-                icon="📚"
-                label="MY PLANS"
-              />
-            </div>
-          </div>
+        {/* Flow Content */}
+        {currentFlow === FLOW_STEPS.WELCOME && (
+          <WelcomeFlow onNext={() => moveToNextFlow(FLOW_STEPS.ASSESSMENT)} />
         )}
-
-        {/* Tab Content */}
-        {activeTab === 'dashboard' && (
-          <Dashboard 
-            userProgress={userProgress}
-            onStartAssessment={() => setActiveTab('assessment')}
-            onGeneratePlan={() => setActiveTab('generate')}
-            onViewPlans={() => setActiveTab('plans')}
-            addNotification={addNotification}
-          />
-        )}
-        {activeTab === 'assessment' && (
+        
+        {currentFlow === FLOW_STEPS.ASSESSMENT && (
           <Assessment 
             onAssessmentComplete={handleAssessmentComplete}
-            onBack={handleBackToDashboard}
+            onBack={() => moveToNextFlow(FLOW_STEPS.WELCOME)}
             addNotification={addNotification}
           />
         )}
-        {activeTab === 'generate' && (
-          <GeneratePlan 
-            topics={topics} 
-            levels={levels} 
+        
+        {currentFlow === FLOW_STEPS.CAREER_CANVAS && (
+          <CareerCanvas
+            assessmentResult={assessmentResult}
+            onComplete={handleCareerCanvasComplete}
+            onBack={() => moveToNextFlow(FLOW_STEPS.ASSESSMENT)}
+            addNotification={addNotification}
+          />
+        )}
+        
+        {currentFlow === FLOW_STEPS.PLAN_GENERATION && (
+          <PlanGeneration
+            topics={topics}
+            levels={levels}
             focusAreas={focusAreas}
             assessmentResult={assessmentResult}
-            onBack={handleBackToDashboard}
+            careerCanvasData={careerCanvasData}
+            onPlanGenerated={handlePlanGenerated}
+            onBack={() => moveToNextFlow(FLOW_STEPS.CAREER_CANVAS)}
             addNotification={addNotification}
           />
         )}
-        {activeTab === 'plans' && (
-          <MyPlans 
+        
+        {currentFlow === FLOW_STEPS.DASHBOARD && (
+          <Dashboard 
+            userProgress={userProgress}
+            flowData={flowData}
             onStartLearning={handleStartLearning}
-            onBack={handleBackToDashboard}
+            onResetFlow={resetFlow}
             addNotification={addNotification}
           />
         )}
-        {activeTab === 'learning' && currentPlanId && (
+        
+        {currentFlow === FLOW_STEPS.LEARNING && currentPlanId && (
           <LearningSession 
             planId={currentPlanId}
-            onBack={handleBackToDashboard}
+            onBack={() => moveToNextFlow(FLOW_STEPS.DASHBOARD)}
             addNotification={addNotification}
           />
         )}
@@ -179,361 +200,104 @@ function App() {
   );
 }
 
-// Navigation Button Component
-const NavButton = ({ active, onClick, icon, label }) => (
-  <button
-    onClick={onClick}
-    className={`px-6 py-3 rounded-lg font-mono font-medium transition-all transform hover:scale-105 ${
-      active
-        ? 'bg-neon-teal text-dark-bg shadow-neon-teal'
-        : 'text-neon-teal hover:text-white hover:bg-dark-card-hover border border-neon-teal hover:shadow-neon-teal'
-    }`}
-  >
-    <span className="mr-2">{icon}</span>
-    {label}
-  </button>
-);
+// Flow Navigation Component
+const FlowNavigation = ({ currentFlow, onStepClick }) => {
+  const steps = [
+    { key: FLOW_STEPS.WELCOME, label: 'Welcome', icon: '🏠' },
+    { key: FLOW_STEPS.ASSESSMENT, label: 'Assessment', icon: '🎯' },
+    { key: FLOW_STEPS.CAREER_CANVAS, label: 'Career Canvas', icon: '🗺️' },
+    { key: FLOW_STEPS.PLAN_GENERATION, label: 'Plan Generation', icon: '📋' },
+    { key: FLOW_STEPS.DASHBOARD, label: 'Dashboard', icon: '📊' },
+  ];
 
-// Notification Container Component
-const NotificationContainer = ({ notifications }) => (
-  <div className="fixed top-4 right-4 z-50 space-y-2">
-    {notifications.map(notification => (
-      <div
-        key={notification.id}
-        className={`notification ${
-          notification.type === 'success' ? 'border-neon-green' : 
-          notification.type === 'error' ? 'border-red-500' : 'border-neon-teal'
-        }`}
-      >
-        <div className="flex items-center">
-          <span className="mr-2">
-            {notification.type === 'success' ? '✅' : 
-             notification.type === 'error' ? '❌' : 'ℹ️'}
-          </span>
-          <span className="text-white">{notification.message}</span>
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
-// Dashboard Component
-const Dashboard = ({ userProgress, onStartAssessment, onGeneratePlan, onViewPlans, addNotification }) => {
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-3 space-y-8">
-          {/* Welcome Section */}
-          <div className="glass-card glass-card-hover p-8 shadow-cyber-glow">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold text-white">
-                <span className="neon-text-teal">WELCOME</span> TO YOUR LEARNING HUB
-              </h2>
-              <div className="text-4xl animate-float">🚀</div>
-            </div>
-            <p className="text-gray-300 mb-8 text-lg">
-              Initialize your cybersecurity journey with AI-powered assessments and personalized learning paths.
-            </p>
-            
-            {/* Quick Action Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <ActionCard
-                icon="🎯"
-                title="SCAN KNOWLEDGE"
-                description="Advanced assessment system to analyze your current skill matrix"
-                onClick={onStartAssessment}
-                color="teal"
-                delay="0"
-              />
-              <ActionCard
-                icon="📋"
-                title="GENERATE PLAN"
-                description="AI-crafted learning sequences tailored to your objectives"
-                onClick={onGeneratePlan}
-                color="green"
-                delay="100"
-              />
-              <ActionCard
-                icon="📚"
-                title="ACCESS VAULT"
-                description="Your personal collection of learning plans and achievements"
-                onClick={onViewPlans}
-                color="blue"
-                delay="200"
-              />
-            </div>
-          </div>
+    <div className="flow-nav">
+      {steps.map((step, index) => (
+        <div
+          key={step.key}
+          className={`flow-nav-dot ${currentFlow === step.key ? 'active' : ''}`}
+          onClick={() => onStepClick(step.key)}
+          title={`${index + 1}. ${step.label}`}
+        />
+      ))}
+    </div>
+  );
+};
 
-          {/* Learning Modules */}
-          <div className="glass-card glass-card-hover p-8 shadow-cyber-glow">
-            <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
-              <span className="neon-text-green">ACTIVE MODULES</span>
-              <div className="ml-4 w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <ModuleCard
-                title="Network Security"
-                progress={65}
-                lessons={12}
-                completed={8}
-                icon="🔒"
-                isActive={true}
-              />
-              <ModuleCard
-                title="Ethical Hacking"
-                progress={35}
-                lessons={15}
-                completed={5}
-                icon="👨‍💻"
-                isActive={false}
-              />
-              <ModuleCard
-                title="Incident Response"
-                progress={80}
-                lessons={10}
-                completed={8}
-                icon="🚨"
-                isActive={false}
-              />
-              <ModuleCard
-                title="Cryptography"
-                progress={20}
-                lessons={18}
-                completed={4}
-                icon="🔐"
-                isActive={false}
-              />
-              <ModuleCard
-                title="Digital Forensics"
-                progress={0}
-                lessons={14}
-                completed={0}
-                icon="🔍"
-                isActive={false}
-                isLocked={true}
-              />
-              <ModuleCard
-                title="Cloud Security"
-                progress={0}
-                lessons={16}
-                completed={0}
-                icon="☁️"
-                isActive={false}
-                isLocked={true}
-              />
-            </div>
+// Welcome Flow Component
+const WelcomeFlow = ({ onNext }) => {
+  return (
+    <div className="max-w-6xl mx-auto text-center">
+      <div className="glass-card p-12 mb-8">
+        <div className="text-8xl mb-6 animate-float">🛡️</div>
+        <h1 className="text-6xl font-bold text-white mb-6">
+          <span className="accent-text-teal">CYBER</span><span className="accent-text-green">SEC</span> ACADEMY
+        </h1>
+        <div className="text-2xl text-accent-teal font-mono mb-4">
+          [ PERSONALIZED CYBERSECURITY LEARNING PLATFORM ]
+        </div>
+        <p className="text-xl text-gray-300 max-w-4xl mx-auto mb-8">
+          Master cybersecurity with AI-powered assessments, personalized career guidance, and hands-on learning experiences tailored to your goals.
+        </p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          <div className="glass-card p-6 hover:bg-dark-card-hover transition-all">
+            <div className="text-4xl mb-4">🎯</div>
+            <h3 className="text-xl font-bold text-accent-teal mb-2">SKILL ASSESSMENT</h3>
+            <p className="text-gray-300">AI-powered evaluation of your current cybersecurity knowledge and skills</p>
           </div>
-
-          {/* AI Tutor Status */}
-          <div className="glass-card glass-card-hover p-6 shadow-cyber-glow-green">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-neon-green rounded-full flex items-center justify-center animate-pulse-green">
-                  <span className="text-dark-bg text-xl font-bold">AI</span>
-                </div>
-                <div>
-                  <h4 className="text-xl font-bold text-neon-green">CYBER TUTOR ONLINE</h4>
-                  <p className="text-gray-300">Ready for 1:1 learning sessions and real-time assistance</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => addNotification('AI Tutor ready! Start a learning session to chat.', 'info')}
-                className="btn-neon-green"
-              >
-                ACTIVATE
-              </button>
-            </div>
+          <div className="glass-card p-6 hover:bg-dark-card-hover transition-all">
+            <div className="text-4xl mb-4">🗺️</div>
+            <h3 className="text-xl font-bold text-accent-green mb-2">CAREER CANVAS</h3>
+            <p className="text-gray-300">Personalized career roadmap with skills matrix and learning paths</p>
+          </div>
+          <div className="glass-card p-6 hover:bg-dark-card-hover transition-all">
+            <div className="text-4xl mb-4">🤖</div>
+            <h3 className="text-xl font-bold text-accent-blue mb-2">AI TUTORING</h3>
+            <p className="text-gray-300">1:1 mentoring with advanced AI for real-time guidance and support</p>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-8">
-          {/* Progress Stats */}
-          <div className="glass-card p-6 shadow-cyber-glow">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-              <span className="neon-text-teal">PROGRESS MATRIX</span>
-            </h3>
-            {userProgress ? (
-              <div className="space-y-6">
-                <div className="text-center">
-                  <div className="relative w-24 h-24 mx-auto mb-4">
-                    <ProgressRing progress={Math.min(100, (userProgress.total_points / 1000) * 100)} />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-2xl font-bold text-neon-teal">
-                        {Math.round((userProgress.total_points / 1000) * 100)}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-300">Overall Progress</div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div className="glass-card p-3">
-                    <div className="text-lg font-bold text-neon-green">
-                      {userProgress.total_points}
-                    </div>
-                    <div className="text-xs text-gray-400">XP EARNED</div>
-                  </div>
-                  <div className="glass-card p-3">
-                    <div className="text-lg font-bold text-neon-teal">
-                      {userProgress.learning_streak}
-                    </div>
-                    <div className="text-xs text-gray-400">DAY STREAK</div>
-                  </div>
-                </div>
-                
-                <div className="text-center">
-                  <div className="text-lg text-orange-400 font-mono">
-                    🔥 LEVEL {Math.floor(userProgress.total_points / 100) + 1}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-gray-400 py-8">
-                <div className="text-4xl mb-4 animate-float">📊</div>
-                <p>Initialize your first scan to unlock progress tracking</p>
-              </div>
-            )}
-          </div>
-
-          {/* Achievements */}
-          <div className="glass-card p-6 shadow-cyber-glow">
-            <h3 className="text-xl font-bold text-white mb-4">
-              <span className="neon-text-green">ACHIEVEMENTS</span>
-            </h3>
-            {userProgress && userProgress.achievements.length > 0 ? (
-              <div className="space-y-3">
-                {userProgress.achievements.slice(0, 4).map((achievement, index) => (
-                  <div key={index} className="flex items-center space-x-3 p-3 glass-card hover:bg-dark-card-hover transition-all">
-                    <div className="text-2xl">{achievement.icon}</div>
-                    <div className="flex-1">
-                      <div className="text-white font-semibold text-sm">{achievement.name}</div>
-                      <div className="text-neon-teal text-xs">{achievement.points} XP</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-gray-400 py-8">
-                <div className="text-4xl mb-4 animate-float">🏆</div>
-                <p>Complete challenges to earn achievements</p>
-              </div>
-            )}
-          </div>
-
-          {/* System Status */}
-          <div className="glass-card p-6 shadow-cyber-glow">
-            <h3 className="text-xl font-bold text-white mb-4">
-              <span className="neon-text-teal">SYSTEM STATUS</span>
-            </h3>
-            <div className="space-y-3">
-              <StatusItem label="AI TUTOR" status="ONLINE" color="green" />
-              <StatusItem label="ASSESSMENT ENGINE" status="READY" color="teal" />
-              <StatusItem label="LEARNING VAULT" status="SYNCHRONIZED" color="green" />
-              <StatusItem label="PROGRESS TRACKER" status="ACTIVE" color="teal" />
-            </div>
+        <div className="space-y-4">
+          <h2 className="text-3xl font-bold text-white mb-6">YOUR LEARNING JOURNEY</h2>
+          <div className="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-8">
+            <ProgressStep number="1" title="Skill Assessment" description="Evaluate current knowledge" active />
+            <div className="text-accent-teal text-2xl hidden md:block">→</div>
+            <ProgressStep number="2" title="Career Canvas" description="Map your career path" />
+            <div className="text-accent-teal text-2xl hidden md:block">→</div>
+            <ProgressStep number="3" title="Learning Plan" description="Personalized curriculum" />
+            <div className="text-accent-teal text-2xl hidden md:block">→</div>
+            <ProgressStep number="4" title="AI Learning" description="Guided practice sessions" />
           </div>
         </div>
+
+        <button
+          onClick={onNext}
+          className="mt-8 btn-cyber py-4 px-8 text-lg font-bold"
+        >
+          🚀 BEGIN YOUR CYBERSECURITY JOURNEY
+        </button>
       </div>
     </div>
   );
 };
 
-// Action Card Component
-const ActionCard = ({ icon, title, description, onClick, color, delay }) => (
-  <div
-    className={`glass-card glass-card-hover p-6 cursor-pointer interactive-hover animate-float`}
-    onClick={onClick}
-    style={{ animationDelay: `${delay}ms` }}
-  >
-    <div className="text-4xl mb-4 text-center">{icon}</div>
-    <h3 className={`text-lg font-bold mb-2 text-center ${
-      color === 'teal' ? 'neon-text-teal' : 
-      color === 'green' ? 'neon-text-green' : 
-      'text-neon-blue'
-    }`}>
-      {title}
-    </h3>
-    <p className="text-gray-300 text-sm text-center">{description}</p>
-  </div>
-);
-
-// Module Card Component
-const ModuleCard = ({ title, progress, lessons, completed, icon, isActive, isLocked = false }) => (
-  <div className={`glass-card p-6 ${
-    isLocked ? 'opacity-50' : 'glass-card-hover interactive-hover'
-  } ${isActive ? 'border-neon-green shadow-neon-green' : ''}`}>
-    <div className="flex items-center justify-between mb-4">
-      <span className="text-2xl">{icon}</span>
-      {isLocked && <span className="text-yellow-400">🔒</span>}
-      {isActive && <div className="w-2 h-2 bg-neon-green rounded-full animate-pulse"></div>}
-    </div>
-    <h4 className="text-white font-bold mb-2">{title}</h4>
-    <div className="text-sm text-gray-300 mb-3">
-      {completed}/{lessons} lessons • {progress}% complete
-    </div>
-    <div className="w-full bg-dark-border rounded-full h-2">
-      <div 
-        className={`h-2 rounded-full transition-all duration-500 ${
-          isActive ? 'bg-neon-green' : 'bg-neon-teal'
-        }`}
-        style={{ width: `${progress}%` }}
-      ></div>
+// Progress Step Component
+const ProgressStep = ({ number, title, description, active = false }) => (
+  <div className={`progress-step ${active ? 'active' : ''}`}>
+    <div className="progress-step-number">{number}</div>
+    <div>
+      <h4 className="font-semibold text-white">{title}</h4>
+      <p className="text-sm text-gray-400">{description}</p>
     </div>
   </div>
 );
 
-// Progress Ring Component
-const ProgressRing = ({ progress }) => {
-  const radius = 40;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-  return (
-    <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
-      <circle
-        cx="50"
-        cy="50"
-        r={radius}
-        stroke="currentColor"
-        strokeWidth="8"
-        fill="transparent"
-        className="text-dark-border"
-      />
-      <circle
-        cx="50"
-        cy="50"
-        r={radius}
-        stroke="currentColor"
-        strokeWidth="8"
-        fill="transparent"
-        strokeDasharray={circumference}
-        strokeDashoffset={strokeDashoffset}
-        className="text-neon-teal transition-all duration-500"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-};
-
-// Status Item Component
-const StatusItem = ({ label, status, color }) => (
-  <div className="flex items-center justify-between text-sm">
-    <span className="text-gray-300">{label}</span>
-    <div className="flex items-center space-x-2">
-      <div className={`w-2 h-2 rounded-full animate-pulse ${
-        color === 'green' ? 'bg-neon-green' : 'bg-neon-teal'
-      }`}></div>
-      <span className={color === 'green' ? 'text-neon-green' : 'text-neon-teal'}>
-        {status}
-      </span>
-    </div>
-  </div>
-);
-
-// Generate Plan Component (keeping it similar but with new styling)
-const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, addNotification }) => {
+// Plan Generation Component
+const PlanGeneration = ({ 
+  topics, levels, focusAreas, assessmentResult, careerCanvasData, 
+  onPlanGenerated, onBack, addNotification 
+}) => {
   const [formData, setFormData] = useState({
     topic: 'network-security',
     level: 'beginner',
@@ -551,14 +315,22 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
   // Update form data when assessment result is available
   useEffect(() => {
     if (assessmentResult) {
+      let background = `Assessment Score: ${assessmentResult.percentage}%, Skill Level: ${assessmentResult.skill_level}`;
+      
+      if (careerCanvasData) {
+        background += `\nCareer Goals: ${careerCanvasData.careerGoals.join(', ')}`;
+        background += `\nStrengths: ${careerCanvasData.strengths.join(', ')}`;
+        background += `\nAreas for Growth: ${careerCanvasData.areasForGrowth.join(', ')}`;
+      }
+      
       setFormData(prev => ({
         ...prev,
         level: assessmentResult.skill_level,
         assessment_result_id: assessmentResult.result_id,
-        user_background: `Based on assessment: ${assessmentResult.percentage}% score, ${assessmentResult.recommendations.join(', ')}`
+        user_background: background
       }));
     }
-  }, [assessmentResult]);
+  }, [assessmentResult, careerCanvasData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -603,7 +375,10 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
       await axios.post(`${API}/approve-learning-plan/${generatedPlan.plan_id}?approved=${approved}`);
       setPlanApproved(approved);
       if (approved) {
-        addNotification('Learning plan approved! Ready to start learning.', 'success');
+        addNotification('Learning plan approved! Moving to dashboard.', 'success');
+        setTimeout(() => {
+          onPlanGenerated(generatedPlan);
+        }, 1500);
         try {
           await axios.post(`${API}/award-achievement?user_id=anonymous&achievement_id=plan_approved`);
         } catch (e) {
@@ -620,56 +395,67 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Assessment Result Banner */}
-      {assessmentResult && (
-        <div className="glass-card p-6 mb-8 shadow-cyber-glow-green border-neon-green">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold text-white mb-2 flex items-center">
-                <span className="neon-text-green">ASSESSMENT COMPLETE</span>
-                <span className="ml-2">🎯</span>
-              </h3>
-              <p className="text-white opacity-90 font-mono">
-                SCORE: {assessmentResult.percentage}% • LEVEL: {assessmentResult.skill_level.toUpperCase()}
-              </p>
-            </div>
-            <div className="text-4xl animate-float">
-              {assessmentResult.percentage >= 80 ? '🏆' : assessmentResult.percentage >= 60 ? '👍' : '📚'}
+      {/* Header with flow context */}
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-white mb-4">
+          <span className="accent-text-teal">LEARNING PLAN</span> GENERATION
+        </h1>
+        <p className="text-lg text-gray-300">
+          Based on your assessment and career canvas, let's create your personalized learning plan
+        </p>
+      </div>
+
+      {/* Assessment & Career Canvas Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {assessmentResult && (
+          <div className="glass-card p-6 border border-accent-green">
+            <h3 className="text-xl font-bold text-accent-green mb-4">📊 ASSESSMENT RESULTS</h3>
+            <div className="space-y-2">
+              <p className="text-white">Score: <span className="accent-text-green">{assessmentResult.percentage}%</span></p>
+              <p className="text-white">Skill Level: <span className="accent-text-green">{assessmentResult.skill_level.toUpperCase()}</span></p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+        
+        {careerCanvasData && (
+          <div className="glass-card p-6 border border-accent-teal">
+            <h3 className="text-xl font-bold text-accent-teal mb-4">🗺️ CAREER CANVAS</h3>
+            <div className="space-y-2">
+              <p className="text-white">Primary Goal: <span className="accent-text-teal">{careerCanvasData.careerGoals[0]}</span></p>
+              <p className="text-white">Key Strength: <span className="accent-text-teal">{careerCanvasData.strengths[0]}</span></p>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Form Section */}
-        <div className="glass-card p-8 shadow-cyber-glow">
+        <div className="glass-card p-8">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold text-white">
-              <span className="neon-text-teal">PLAN GENERATION</span>
+            <h2 className="text-2xl font-bold text-white">
+              CONFIGURE YOUR PLAN
             </h2>
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="text-gray-400 hover:text-neon-teal transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-            )}
+            <button
+              onClick={onBack}
+              className="text-gray-400 hover:text-accent-teal transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
           </div>
           
           <div className="space-y-6">
             {/* Topic Selection */}
             <div>
-              <label className="block text-sm font-medium text-neon-teal mb-2 font-mono">
+              <label className="block text-sm font-medium text-accent-teal mb-2">
                 CYBERSECURITY DOMAIN
               </label>
               <select
                 name="topic"
                 value={formData.topic}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-dark-card border border-neon-teal rounded-lg text-white focus:ring-2 focus:ring-neon-teal focus:border-transparent font-mono"
+                className="w-full px-4 py-3 bg-dark-card border border-dark-border rounded-lg text-white focus:ring-2 focus:ring-accent-teal focus:border-transparent"
               >
                 {Object.entries(topics).map(([key, value]) => (
                   <option key={key} value={key}>
@@ -681,14 +467,14 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
 
             {/* Level Selection */}
             <div>
-              <label className="block text-sm font-medium text-neon-teal mb-2 font-mono">
-                SKILL LEVEL {assessmentResult && <span className="text-neon-green">[FROM SCAN]</span>}
+              <label className="block text-sm font-medium text-accent-teal mb-2">
+                SKILL LEVEL {assessmentResult && <span className="text-accent-green">[FROM ASSESSMENT]</span>}
               </label>
               <select
                 name="level"
                 value={formData.level}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-dark-card border border-neon-teal rounded-lg text-white focus:ring-2 focus:ring-neon-teal focus:border-transparent font-mono"
+                className="w-full px-4 py-3 bg-dark-card border border-dark-border rounded-lg text-white focus:ring-2 focus:ring-accent-teal focus:border-transparent"
               >
                 {Object.entries(levels).map(([key, value]) => (
                   <option key={key} value={key}>
@@ -700,7 +486,7 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
 
             {/* Duration */}
             <div>
-              <label className="block text-sm font-medium text-neon-teal mb-2 font-mono">
+              <label className="block text-sm font-medium text-accent-teal mb-2">
                 DURATION (WEEKS)
               </label>
               <input
@@ -710,13 +496,13 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
                 onChange={handleInputChange}
                 min="1"
                 max="52"
-                className="w-full px-4 py-3 bg-dark-card border border-neon-teal rounded-lg text-white focus:ring-2 focus:ring-neon-teal focus:border-transparent font-mono"
+                className="w-full px-4 py-3 bg-dark-card border border-dark-border rounded-lg text-white focus:ring-2 focus:ring-accent-teal focus:border-transparent"
               />
             </div>
 
             {/* Focus Areas */}
             <div>
-              <label className="block text-sm font-medium text-neon-teal mb-2 font-mono">
+              <label className="block text-sm font-medium text-accent-teal mb-2">
                 FOCUS AREAS [OPTIONAL]
               </label>
               <div className="grid grid-cols-2 gap-3">
@@ -726,38 +512,23 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
                       type="checkbox"
                       checked={formData.focus_areas.includes(area)}
                       onChange={() => handleFocusAreaChange(area)}
-                      className="w-4 h-4 text-neon-teal bg-dark-card border-neon-teal rounded focus:ring-neon-teal"
+                      className="w-4 h-4 text-accent-teal bg-dark-card border-accent-teal rounded focus:ring-accent-teal"
                     />
-                    <span className="text-sm text-gray-300 font-mono">{area}</span>
+                    <span className="text-sm text-gray-300">{area}</span>
                   </label>
                 ))}
               </div>
-            </div>
-
-            {/* Background */}
-            <div>
-              <label className="block text-sm font-medium text-neon-teal mb-2 font-mono">
-                BACKGROUND INFO {assessmentResult && <span className="text-neon-green">[ENHANCED]</span>}
-              </label>
-              <textarea
-                name="user_background"
-                value={formData.user_background}
-                onChange={handleInputChange}
-                placeholder="Describe your experience, goals, and specific interests..."
-                rows="3"
-                className="w-full px-4 py-3 bg-dark-card border border-neon-teal rounded-lg text-white focus:ring-2 focus:ring-neon-teal focus:border-transparent font-mono"
-              />
             </div>
 
             {/* Generate Button */}
             <button
               onClick={generatePlan}
               disabled={loading}
-              className="w-full btn-neon py-4 px-6 text-lg font-bold"
+              className="w-full btn-cyber py-4 px-6 text-lg font-bold"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-neon-teal mr-3"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent-teal mr-3"></div>
                   <span className="loading-dots">GENERATING PLAN</span>
                 </div>
               ) : (
@@ -768,34 +539,34 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
         </div>
 
         {/* Results Section */}
-        <div className="glass-card p-8 shadow-cyber-glow">
-          <h2 className="text-3xl font-bold text-white mb-6">
-            <span className="neon-text-green">GENERATED PLAN</span>
+        <div className="glass-card p-8">
+          <h2 className="text-2xl font-bold text-white mb-6">
+            GENERATED PLAN
           </h2>
           
           {error && (
             <div className="glass-card border-red-500 text-red-100 px-6 py-4 mb-6">
               <div className="flex items-center">
                 <span className="mr-2 text-xl">⚠️</span>
-                <span className="font-mono">{error}</span>
+                <span>{error}</span>
               </div>
             </div>
           )}
 
           {generatedPlan ? (
             <div className="space-y-6">
-              <div className="glass-card border-neon-green text-neon-green px-6 py-4">
-                <div className="flex items-center font-mono">
+              <div className="glass-card border-accent-green text-accent-green px-6 py-4">
+                <div className="flex items-center">
                   <span className="mr-2 text-xl">✅</span>
                   <span>LEARNING PLAN GENERATED SUCCESSFULLY</span>
                 </div>
               </div>
               
               <div className="glass-card p-6">
-                <h3 className="text-xl font-semibold text-white mb-4 font-mono">
+                <h3 className="text-xl font-semibold text-white mb-4">
                   {topics[generatedPlan.topic]} • {levels[generatedPlan.level].toUpperCase()}
                 </h3>
-                <p className="text-gray-300 mb-4 font-mono">
+                <p className="text-gray-300 mb-4">
                   DURATION: {generatedPlan.duration_weeks} WEEKS
                 </p>
                 <div className="max-h-96 overflow-y-auto code-block">
@@ -806,58 +577,49 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
               </div>
 
               {/* Plan Approval Section */}
-              <div className="glass-card border-neon-blue p-6">
-                <h4 className="text-lg font-semibold text-white mb-4 font-mono">
+              <div className="glass-card border-accent-blue p-6">
+                <h4 className="text-lg font-semibold text-white mb-4">
                   📋 PLAN APPROVAL REQUIRED
                 </h4>
                 <p className="text-blue-200 mb-4">
-                  Review your personalized learning plan and approve to activate AI tutoring mode.
+                  Review your personalized learning plan and approve to continue to your dashboard.
                 </p>
                 
                 {!planApproved ? (
                   <div className="flex space-x-4">
                     <button
                       onClick={() => approvePlan(true)}
-                      className="flex-1 btn-neon-green py-3 px-6 font-bold"
+                      className="flex-1 btn-cyber-green py-3 px-6 font-bold"
                     >
-                      ✅ APPROVE & ACTIVATE
+                      ✅ APPROVE & CONTINUE
                     </button>
                     <button
                       onClick={() => approvePlan(false)}
-                      className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-mono font-medium transition-colors"
+                      className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
                     >
                       ❌ REJECT
                     </button>
                   </div>
                 ) : (
                   <div className="text-center">
-                    <div className="text-neon-green text-xl font-bold mb-2 font-mono animate-pulse-green">
-                      ✅ PLAN APPROVED - SYSTEM READY
+                    <div className="text-accent-green text-xl font-bold mb-2 animate-subtle-pulse">
+                      ✅ PLAN APPROVED - REDIRECTING TO DASHBOARD
                     </div>
-                    <p className="text-green-100 mb-4">AI tutoring mode is now active and ready for deployment.</p>
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="btn-neon-green py-3 px-6 font-bold"
-                    >
-                      🚀 INITIATE LEARNING SESSION
-                    </button>
+                    <p className="text-green-100 mb-4">Your learning environment is being prepared...</p>
                   </div>
                 )}
               </div>
               
-              <div className="text-sm text-gray-400 font-mono">
+              <div className="text-sm text-gray-400">
                 PLAN ID: {generatedPlan.plan_id}
               </div>
             </div>
           ) : (
             <div className="text-center text-gray-400 py-12">
               <div className="text-6xl mb-4 animate-float">📋</div>
-              <p className="text-lg font-mono">AWAITING PLAN GENERATION</p>
+              <p className="text-lg">AWAITING PLAN GENERATION</p>
               <p className="text-sm mt-2">
-                {assessmentResult 
-                  ? 'Generate a personalized plan based on your assessment results'
-                  : 'Configure parameters and execute plan generation protocol'
-                }
+                Configure your learning preferences and generate your personalized curriculum
               </p>
             </div>
           )}
@@ -867,11 +629,10 @@ const GeneratePlan = ({ topics, levels, focusAreas, assessmentResult, onBack, ad
   );
 };
 
-// My Plans Component (keeping it similar but with new styling)
-const MyPlans = ({ onStartLearning, onBack, addNotification }) => {
+// Dashboard Component
+const Dashboard = ({ userProgress, flowData, onStartLearning, onResetFlow, addNotification }) => {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPlan, setSelectedPlan] = useState(null);
 
   useEffect(() => {
     fetchPlans();
@@ -889,20 +650,6 @@ const MyPlans = ({ onStartLearning, onBack, addNotification }) => {
     }
   };
 
-  const deletePlan = async (planId) => {
-    try {
-      await axios.delete(`${API}/learning-plans/${planId}`);
-      setPlans(plans.filter(plan => plan.id !== planId));
-      if (selectedPlan && selectedPlan.id === planId) {
-        setSelectedPlan(null);
-      }
-      addNotification('Plan deleted successfully', 'success');
-    } catch (error) {
-      console.error('Error deleting plan:', error);
-      addNotification('Error deleting plan', 'error');
-    }
-  };
-
   const startLearningSession = (planId) => {
     onStartLearning(planId);
   };
@@ -911,8 +658,8 @@ const MyPlans = ({ onStartLearning, onBack, addNotification }) => {
     return (
       <div className="flex justify-center items-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-teal mb-4"></div>
-          <p className="text-neon-teal font-mono">LOADING VAULT...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-teal mb-4"></div>
+          <p className="text-accent-teal">LOADING DASHBOARD...</p>
         </div>
       </div>
     );
@@ -920,75 +667,91 @@ const MyPlans = ({ onStartLearning, onBack, addNotification }) => {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {onBack && (
-        <div className="mb-6">
-          <button
-            onClick={onBack}
-            className="flex items-center text-gray-400 hover:text-neon-teal transition-colors font-mono"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            BACK TO DASHBOARD
-          </button>
-        </div>
-      )}
+      {/* Header */}
+      <div className="text-center mb-12">
+        <h1 className="text-5xl font-bold text-white mb-4">
+          <span className="accent-text-teal">LEARNING</span> <span className="accent-text-green">DASHBOARD</span>
+        </h1>
+        <p className="text-xl text-gray-300">
+          Your personalized cybersecurity learning environment
+        </p>
+        <button
+          onClick={onResetFlow}
+          className="mt-4 text-gray-400 hover:text-accent-teal transition-colors text-sm"
+        >
+          🔄 Reset Learning Flow
+        </button>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Plans List */}
-        <div className="lg:col-span-1">
-          <div className="glass-card p-6 shadow-cyber-glow">
-            <h2 className="text-2xl font-bold text-white mb-6 font-mono">
-              <span className="neon-text-teal">LEARNING VAULT</span> ({plans.length})
-            </h2>
-            
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-3 space-y-8">
+          {/* Flow Summary */}
+          {flowData.assessmentResult && (
+            <div className="glass-card p-6">
+              <h2 className="text-2xl font-bold text-white mb-4">📈 YOUR JOURNEY SUMMARY</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-accent-green">
+                    {flowData.assessmentResult.percentage}%
+                  </div>
+                  <div className="text-gray-300 text-sm">Assessment Score</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-accent-teal">
+                    {flowData.assessmentResult.skill_level.toUpperCase()}
+                  </div>
+                  <div className="text-gray-300 text-sm">Skill Level</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-accent-blue">
+                    {plans.length}
+                  </div>
+                  <div className="text-gray-300 text-sm">Learning Plans</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Learning Plans */}
+          <div className="glass-card p-8">
+            <h3 className="text-2xl font-bold text-white mb-6">
+              🎯 YOUR LEARNING PLANS
+            </h3>
             {plans.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
                 <div className="text-6xl mb-4 animate-float">📚</div>
-                <p className="font-mono">VAULT EMPTY</p>
-                <p className="text-sm">Generate your first learning plan to begin</p>
+                <p>No learning plans yet</p>
+                <p className="text-sm">Complete the flow to generate your first plan</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {plans.map(plan => (
                   <div
                     key={plan.id}
-                    onClick={() => setSelectedPlan(plan)}
-                    className={`p-4 rounded-lg cursor-pointer transition-all glass-card ${
-                      selectedPlan && selectedPlan.id === plan.id
-                        ? 'border-neon-teal shadow-neon-teal'
-                        : 'hover:bg-dark-card-hover'
-                    }`}
+                    className="glass-card p-6 hover:bg-dark-card-hover transition-all"
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center mb-2">
-                          <h3 className="font-semibold text-white text-sm font-mono">
-                            {plan.topic.replace('-', ' ').toUpperCase()}
-                          </h3>
-                          {plan.approved && (
-                            <span className="ml-2 text-neon-green text-xs">✅</span>
-                          )}
-                        </div>
-                        <p className="text-gray-300 text-xs font-mono">
-                          {plan.level.toUpperCase()} • {plan.duration_weeks}W
-                        </p>
-                        <p className="text-gray-400 text-xs mt-1 font-mono">
-                          {new Date(plan.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deletePlan(plan.id);
-                        }}
-                        className="text-red-400 hover:text-red-300 ml-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                    <div className="flex justify-between items-start mb-4">
+                      <h4 className="font-bold text-white">
+                        {plan.topic.replace('-', ' ').toUpperCase()}
+                      </h4>
+                      {plan.approved && (
+                        <span className="bg-accent-green text-dark-bg px-2 py-1 rounded text-xs font-bold">
+                          ✅ APPROVED
+                        </span>
+                      )}
                     </div>
+                    <p className="text-gray-300 text-sm mb-4">
+                      {plan.level.toUpperCase()} • {plan.duration_weeks} weeks
+                    </p>
+                    {plan.approved && (
+                      <button
+                        onClick={() => startLearningSession(plan.id)}
+                        className="w-full btn-cyber-green py-2 px-4"
+                      >
+                        🚀 START LEARNING
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -996,97 +759,88 @@ const MyPlans = ({ onStartLearning, onBack, addNotification }) => {
           </div>
         </div>
 
-        {/* Plan Details */}
-        <div className="lg:col-span-2">
-          <div className="glass-card p-6 shadow-cyber-glow">
-            <h2 className="text-2xl font-bold text-white mb-6 font-mono">
-              <span className="neon-text-green">PLAN DETAILS</span>
-            </h2>
-            
-            {selectedPlan ? (
-              <div className="space-y-6">
-                <div className="glass-card p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold text-white font-mono">
-                      {selectedPlan.topic.replace('-', ' ').toUpperCase()}
-                    </h3>
-                    {selectedPlan.approved && (
-                      <span className="bg-neon-green text-dark-bg px-3 py-1 rounded-full text-sm font-medium font-mono">
-                        ✅ APPROVED
-                      </span>
-                    )}
+        {/* Sidebar */}
+        <div className="space-y-8">
+          {/* Progress Stats */}
+          <div className="glass-card p-6">
+            <h3 className="text-xl font-bold text-white mb-4">
+              📊 PROGRESS
+            </h3>
+            {userProgress ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-accent-teal">
+                    {userProgress.total_points}
                   </div>
-                  
-                  <div className="flex flex-wrap gap-4 text-sm text-gray-300 mb-4 font-mono">
-                    <span>LEVEL: {selectedPlan.level.toUpperCase()}</span>
-                    <span>DURATION: {selectedPlan.duration_weeks}W</span>
-                    <span>CREATED: {new Date(selectedPlan.created_at).toLocaleDateString()}</span>
-                  </div>
-                  
-                  {selectedPlan.focus_areas && selectedPlan.focus_areas.length > 0 && (
-                    <div className="mb-4">
-                      <span className="text-sm text-neon-teal font-mono">FOCUS AREAS: </span>
-                      <span className="text-sm text-gray-300 font-mono">
-                        {selectedPlan.focus_areas.join(', ').toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="flex space-x-4 pt-4">
-                    {selectedPlan.approved ? (
-                      <button
-                        onClick={() => startLearningSession(selectedPlan.id)}
-                        className="btn-neon-green py-3 px-6 font-bold"
-                      >
-                        🚀 INITIATE LEARNING SESSION
-                      </button>
-                    ) : (
-                      <div className="text-sm text-gray-400 glass-card px-4 py-2 font-mono">
-                        ⏳ PLAN REQUIRES APPROVAL
-                      </div>
-                    )}
-                    
-                    <button
-                      onClick={() => deletePlan(selectedPlan.id)}
-                      className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-mono font-medium transition-colors"
-                    >
-                      🗑️ DELETE
-                    </button>
-                  </div>
+                  <div className="text-gray-300 text-sm">XP EARNED</div>
                 </div>
-                
-                <div className="glass-card p-4">
-                  <h4 className="font-semibold text-white mb-3 font-mono neon-text-teal">📖 LEARNING PLAN CONTENT</h4>
-                  <div className="max-h-96 overflow-y-auto code-block">
-                    <pre className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
-                      {selectedPlan.curriculum}
-                    </pre>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-accent-green">
+                    {userProgress.learning_streak}
                   </div>
+                  <div className="text-gray-300 text-sm">DAY STREAK</div>
                 </div>
-
-                {/* Personalization Info */}
-                {selectedPlan.assessment_result_id && (
-                  <div className="glass-card border-neon-blue p-4">
-                    <h4 className="font-semibold text-white mb-2 font-mono neon-text-blue">🎯 PERSONALIZED PLAN</h4>
-                    <p className="text-blue-200 text-sm font-mono">
-                      This plan was generated based on your assessment results and personalized recommendations.
-                    </p>
-                  </div>
-                )}
               </div>
             ) : (
-              <div className="text-center text-gray-400 py-12">
-                <div className="text-6xl mb-4 animate-float">👁️</div>
-                <p className="text-lg font-mono">SELECT A PLAN TO VIEW DETAILS</p>
-                <p className="text-sm mt-2">Click on any plan from the vault to access its content</p>
+              <div className="text-center text-gray-400 py-4">
+                <p>Complete activities to track progress</p>
               </div>
             )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="glass-card p-6">
+            <h3 className="text-xl font-bold text-white mb-4">
+              ⚡ QUICK ACTIONS
+            </h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => addNotification('Feature coming soon!', 'info')}
+                className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all"
+              >
+                📝 Practice Quiz
+              </button>
+              <button
+                onClick={() => addNotification('Feature coming soon!', 'info')}
+                className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all"
+              >
+                📊 View Analytics
+              </button>
+              <button
+                onClick={() => addNotification('Feature coming soon!', 'info')}
+                className="w-full text-left px-3 py-2 glass-card hover:bg-dark-card-hover rounded text-sm text-gray-300 transition-all"
+              >
+                🎯 Set Goals
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Notification Container Component
+const NotificationContainer = ({ notifications }) => (
+  <div className="fixed top-4 right-4 z-50 space-y-2">
+    {notifications.map(notification => (
+      <div
+        key={notification.id}
+        className={`notification ${
+          notification.type === 'success' ? 'border-accent-green' : 
+          notification.type === 'error' ? 'border-red-500' : 'border-accent-teal'
+        }`}
+      >
+        <div className="flex items-center">
+          <span className="mr-2">
+            {notification.type === 'success' ? '✅' : 
+             notification.type === 'error' ? '❌' : 'ℹ️'}
+          </span>
+          <span className="text-white">{notification.message}</span>
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 export default App;
