@@ -78,8 +78,9 @@ class MockCollection:
                     return type('obj', (object,), {'deleted_count': 1})
             return type('obj', (object,), {'deleted_count': 0})
             
-    def find(self):
+    def find(self, query=None):
         # This is not an async method, it returns self
+        self.query = query  # Store the query for later use in to_list
         return self
             
     def sort(self, field, direction):
