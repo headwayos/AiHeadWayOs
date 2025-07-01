@@ -20,8 +20,14 @@ const LearningSession = ({ planId, onBack, addNotification }) => {
   const [codeExample, setCodeExample] = useState('');
   const [terminalHistory, setTerminalHistory] = useState([]);
   const [terminalInput, setTerminalInput] = useState('');
+  const [currentChapter, setCurrentChapter] = useState(null);
+  const [chapterContent, setChapterContent] = useState(null);
+  const [aiAssistantMode, setAiAssistantMode] = useState('waiting'); // 'waiting', 'active', 'minimized'
+  const [readingProgress, setReadingProgress] = useState(0);
+  const [showTableOfContents, setShowTableOfContents] = useState(true);
   const messagesEndRef = useRef(null);
   const startTimeRef = useRef(Date.now());
+  const contentRef = useRef(null);
 
   useEffect(() => {
     startLearningSession();
