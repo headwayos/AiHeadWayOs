@@ -120,25 +120,27 @@ const LearningSession = ({ planId, onBack, addNotification }) => {
   };
 
   const sendWelcomeMessage = async (sessionId, planData) => {
-    const welcomeMessage = `🛡️ **CYBER TUTOR AI ONLINE** 
+    const welcomeMessage = `🛡️ **CYBER TUTOR AI READY** 
 
-Welcome to your personalized cybersecurity learning session! I'm your AI instructor, ready to guide you through **${planData.topic.replace('-', ' ').toUpperCase()}**.
+Welcome to your personalized cybersecurity learning session! I'm your AI instructor for **${planData.topic.replace('-', ' ').toUpperCase()}**.
 
-**SESSION INITIALIZED:**
-✅ Learning plan loaded
-✅ AI tutor activated  
-✅ Real-time assistance ready
-✅ Progress tracking enabled
+**I'M HERE TO HELP:**
+🎯 I'll wait while you read each chapter
+📚 Ask me questions about any concept
+🔍 Request explanations or examples
+💡 Get hints when you're stuck
+🛠️ Practice with interactive demos
 
-**AVAILABLE COMMANDS:**
-🎯 \`/quiz\` - Generate practice questions
-📊 \`/progress\` - View learning analytics
-🔍 \`/explain [topic]\` - Deep dive explanations
-💻 \`/demo\` - Request code demonstrations
-🛠️ \`/terminal\` - Access practice terminal
+**READING MODE ACTIVATED:**
+I can see you're starting with the first chapter. Take your time to read through the content. When you're ready to discuss, ask me anything!
 
-**Ready to begin your cybersecurity journey?**
-What would you like to explore first? I can explain concepts, provide examples, or quiz your understanding!`;
+**Available Commands:**
+• \`/explain [concept]\` - Deep explanations
+• \`/example [topic]\` - Code examples  
+• \`/quiz\` - Test your knowledge
+• \`/help\` - Show all commands
+
+I'm watching your progress and ready to assist whenever you need! 📖✨`;
 
     try {
       const aiMessage = {
