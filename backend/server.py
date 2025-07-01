@@ -1899,6 +1899,20 @@ PERSONALIZATION BASED ON ASSESSMENT:
 
 Please tailor the learning plan to address the learner's specific strengths and areas for improvement based on their assessment performance.
 """
+    elif request.skip_assessment:
+        # Handle skipped assessment case with general personalization
+        user_prefs = request.user_preferences or {}
+        personalization_notes = f"""
+PERSONALIZATION FOR SKIPPED ASSESSMENT:
+- Selected Topic: {request.topic.replace('-', ' ').title()}
+- Skill Level: {request.level.title()}
+- Career Goal: {request.career_goal or 'General Learning'}
+- Current Role: {user_prefs.get('current_role', 'Not specified')}
+- Experience: {user_prefs.get('experience_years', 0)} years
+
+This learner chose to skip the assessment, so provide a comprehensive but general learning plan suitable for the {request.level} level.
+Include foundational concepts and practical exercises appropriate for their stated skill level.
+"""
     
     # Create comprehensive prompt with personalization
     base_prompt = create_comprehensive_prompt(request)
