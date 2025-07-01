@@ -561,54 +561,124 @@ const PlanGeneration = ({
                   <span>LEARNING PLAN GENERATED SUCCESSFULLY</span>
                 </div>
               </div>
-              
-              <div className="glass-card p-6">
-                <h3 className="text-xl font-semibold text-white mb-4">
-                  {topics[generatedPlan.topic]} • {levels[generatedPlan.level].toUpperCase()}
-                </h3>
-                <p className="text-gray-300 mb-4">
-                  DURATION: {generatedPlan.duration_weeks} WEEKS
-                </p>
-                <div className="max-h-96 overflow-y-auto code-block">
-                  <pre className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
-                    {generatedPlan.curriculum}
-                  </pre>
-                </div>
-              </div>
 
-              {/* Plan Approval Section */}
-              <div className="glass-card border-accent-blue p-6">
-                <h4 className="text-lg font-semibold text-white mb-4">
-                  📋 PLAN APPROVAL REQUIRED
-                </h4>
-                <p className="text-blue-200 mb-4">
-                  Review your personalized learning plan and approve to continue to your dashboard.
-                </p>
-                
-                {!planApproved ? (
+              {/* Table of Contents Section */}
+              {generatedPlan.table_of_contents && !generatedPlan.toc_approved && (
+                <div className="glass-card border-accent-teal p-6">
+                  <h3 className="text-2xl font-semibold text-white mb-4">
+                    📚 TABLE OF CONTENTS APPROVAL
+                  </h3>
+                  <p className="text-gray-300 mb-4">
+                    Review the structured learning path below and approve to start your journey:
+                  </p>
+                  
+                  <div className="glass-card p-4 mb-6 bg-dark-card">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="text-accent-teal font-mono text-sm">
+                        📖 {generatedPlan.table_of_contents.total_chapters} CHAPTERS
+                      </div>
+                      <div className="text-accent-green font-mono text-sm">
+                        ⏱️ {Math.floor(generatedPlan.table_of_contents.total_estimated_time / 60)}h {generatedPlan.table_of_contents.total_estimated_time % 60}m
+                      </div>
+                      <div className="text-accent-blue font-mono text-sm">
+                        📊 {generatedPlan.table_of_contents.difficulty_level.toUpperCase()}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {generatedPlan.table_of_contents.chapters.map((chapter, index) => (
+                        <div key={chapter.id} className="glass-card p-4 border border-dark-border">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-white font-bold">
+                              {chapter.number}. {chapter.title}
+                            </h4>
+                            <div className="text-accent-teal text-sm font-mono">
+                              {chapter.sections.reduce((total, section) => total + section.estimated_time, 0)} min
+                            </div>
+                          </div>
+                          
+                          <div className="ml-6 space-y-2">
+                            {chapter.sections.map((section) => (
+                              <div key={section.id} className="flex items-center justify-between text-gray-300">
+                                <span className="text-sm">{section.id} {section.title}</span>
+                                <span className="text-xs text-accent-green font-mono">{section.estimated_time}m</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="flex space-x-4">
                     <button
-                      onClick={() => approvePlan(true)}
+                      onClick={() => approveTOC(true)}
                       className="flex-1 btn-cyber-green py-3 px-6 font-bold"
                     >
-                      ✅ APPROVE & CONTINUE
+                      ✅ APPROVE TABLE OF CONTENTS
                     </button>
                     <button
-                      onClick={() => approvePlan(false)}
+                      onClick={() => approveTOC(false)}
                       className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
                     >
-                      ❌ REJECT
+                      ❌ REGENERATE
                     </button>
                   </div>
-                ) : (
-                  <div className="text-center">
-                    <div className="text-accent-green text-xl font-bold mb-2 animate-subtle-pulse">
-                      ✅ PLAN APPROVED - REDIRECTING TO DASHBOARD
-                    </div>
-                    <p className="text-green-100 mb-4">Your learning environment is being prepared...</p>
+                </div>
+              )}
+              
+              {/* Traditional Plan Display (after TOC approval) */}
+              {generatedPlan.toc_approved && (
+                <div className="glass-card p-6">
+                  <h3 className="text-xl font-semibold text-white mb-4">
+                    {topics[generatedPlan.topic]} • {levels[generatedPlan.level].toUpperCase()}
+                  </h3>
+                  <p className="text-gray-300 mb-4">
+                    DURATION: {generatedPlan.duration_weeks} WEEKS
+                  </p>
+                  <div className="max-h-96 overflow-y-auto code-block">
+                    <pre className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
+                      {generatedPlan.curriculum}
+                    </pre>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Final Plan Approval Section (only after TOC approval) */}
+              {generatedPlan.toc_approved && (
+                <div className="glass-card border-accent-blue p-6">
+                  <h4 className="text-lg font-semibold text-white mb-4">
+                    📋 FINAL PLAN APPROVAL
+                  </h4>
+                  <p className="text-blue-200 mb-4">
+                    Your table of contents has been approved. Now finalize your learning plan to continue to your dashboard.
+                  </p>
+                  
+                  {!planApproved ? (
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={() => approvePlan(true)}
+                        className="flex-1 btn-cyber-green py-3 px-6 font-bold"
+                      >
+                        ✅ APPROVE & CONTINUE
+                      </button>
+                      <button
+                        onClick={() => approvePlan(false)}
+                        className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        ❌ REJECT
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="text-accent-green text-xl font-bold mb-2 animate-subtle-pulse">
+                        ✅ PLAN APPROVED - REDIRECTING TO DASHBOARD
+                      </div>
+                      <p className="text-green-100 mb-4">Your learning environment is being prepared...</p>
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="text-sm text-gray-400">
                 PLAN ID: {generatedPlan.plan_id}
