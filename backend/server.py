@@ -1765,7 +1765,7 @@ async def approve_learning_plan(plan_id: str, approved: bool = True):
 
 @api_router.post("/generate-learning-plan", response_model=LearningPlanResponse)
 async def generate_learning_plan(request: LearningPlanRequest):
-    """Generate a comprehensive cybersecurity learning plan"""
+    """Generate a comprehensive cybersecurity learning plan with structured content"""
     
     logger.info(f"Generating learning plan for topic: {request.topic}, level: {request.level}")
     
@@ -1796,22 +1796,30 @@ Please tailor the learning plan to address the learner's specific strengths and 
     base_prompt = create_comprehensive_prompt(request)
     full_prompt = base_prompt + personalization_notes
     
-    # Generate content using Ollama
+    # Generate content using Ollama (for traditional curriculum)
     curriculum = await generate_with_ollama(full_prompt)
     
     if not curriculum:
         raise HTTPException(status_code=500, detail="Failed to generate curriculum content")
     
-    # Create learning plan object
+    # Generate structured learning content (like screenshots)
+    structured_content = create_structured_learning_content(request.topic, request.level)
+    table_of_contents = TableOfContents(**structured_content["table_of_contents"])
+    chapters = [LearningChapter(**chapter_data) for chapter_data in structured_content["chapters"]]
+    
+    # Create learning plan object with structured content
     learning_plan = LearningPlan(
         topic=request.topic,
         level=request.level,
         duration_weeks=request.duration_weeks,
         focus_areas=request.focus_areas,
         curriculum=curriculum,
+        table_of_contents=table_of_contents,
+        chapters=chapters,
         user_background=request.user_background,
         assessment_result_id=request.assessment_result_id,
-        personalization_notes=personalization_notes
+        personalization_notes=personalization_notes,
+        toc_approved=False  # Requires approval before starting learning
     )
     
     # Save to database
@@ -1827,6 +1835,7 @@ Please tailor the learning plan to address the learner's specific strengths and 
         success=True,
         plan_id=learning_plan.id,
         curriculum=curriculum,
+        table_of_contents=table_of_contents,
         topic=request.topic,
         level=request.level,
         duration_weeks=request.duration_weeks
