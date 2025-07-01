@@ -1729,6 +1729,86 @@ async def award_achievement(user_id: str, achievement_id: str):
         logger.error(f"Error awarding achievement: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to award achievement: {str(e)}")
 
+@api_router.post("/approve-toc/{plan_id}")
+async def approve_table_of_contents(plan_id: str, approved: bool = True):
+    """Approve or reject a learning plan's table of contents"""
+    
+    try:
+        # Find and update the plan
+        plan_found = False
+        for i, plan in enumerate(in_memory_db["learning_plans"]):
+            if plan.get("id") == plan_id:
+                in_memory_db["learning_plans"][i]["toc_approved"] = approved
+                in_memory_db["learning_plans"][i]["updated_at"] = datetime.utcnow()
+                plan_found = True
+                break
+        
+        if not plan_found:
+            raise HTTPException(status_code=404, detail="Learning plan not found")
+        
+        return {
+            "success": True,
+            "plan_id": plan_id,
+            "toc_approved": approved
+        }
+        
+    except Exception as e:
+        logger.error(f"Error approving table of contents: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to approve table of contents: {str(e)}")
+
+@api_router.get("/learning-plans/{plan_id}/chapter/{chapter_id}")
+async def get_chapter_content(plan_id: str, chapter_id: str):
+    """Get detailed content for a specific chapter"""
+    try:
+        plan = await db.learning_plans.find_one({"id": plan_id})
+        if not plan:
+            raise HTTPException(status_code=404, detail="Learning plan not found")
+        
+        # Find the specific chapter
+        chapters = plan.get("chapters", [])
+        chapter = None
+        for ch in chapters:
+            if ch.get("id") == chapter_id:
+                chapter = ch
+                break
+        
+        if not chapter:
+            raise HTTPException(status_code=404, detail="Chapter not found")
+        
+        return chapter
+        
+    except Exception as e:
+        logger.error(f"Error retrieving chapter content: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve chapter content")
+
+@api_router.get("/learning-plans/{plan_id}/section/{section_id}")
+async def get_section_content(plan_id: str, section_id: str):
+    """Get detailed content for a specific section"""
+    try:
+        plan = await db.learning_plans.find_one({"id": plan_id})
+        if not plan:
+            raise HTTPException(status_code=404, detail="Learning plan not found")
+        
+        # Find the specific section across all chapters
+        chapters = plan.get("chapters", [])
+        section = None
+        for chapter in chapters:
+            for sect in chapter.get("sections", []):
+                if sect.get("id") == section_id:
+                    section = sect
+                    break
+            if section:
+                break
+        
+        if not section:
+            raise HTTPException(status_code=404, detail="Section not found")
+        
+        return section
+        
+    except Exception as e:
+        logger.error(f"Error retrieving section content: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve section content")
+
 @api_router.post("/approve-learning-plan/{plan_id}")
 async def approve_learning_plan(plan_id: str, approved: bool = True):
     """Approve or reject a learning plan"""
