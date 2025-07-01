@@ -6,15 +6,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'neon-teal': '#00ffff',
-        'neon-green': '#00ff00',
-        'neon-blue': '#0080ff',
+        'accent-teal': '#14b8a6',
+        'accent-green': '#10b981',
+        'accent-blue': '#3b82f6',
         'dark-bg': '#0a0a0a',
-        'dark-card': '#111111',
-        'dark-card-hover': '#1a1a1a',
-        'dark-border': '#333333',
-        'cyber-purple': '#9945ff',
-        'cyber-pink': '#ff45b7',
+        'dark-card': '#1a1a1a',
+        'dark-card-hover': '#2a2a2a',
+        'dark-border': '#374151',
+        'cyber-accent': '#00d4aa',
+        'cyber-purple': '#8b5cf6',
+        'cyber-pink': '#ec4899',
       },
       fontFamily: {
         'mono': ['Courier New', 'monospace'],
