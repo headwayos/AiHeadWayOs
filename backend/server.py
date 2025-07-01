@@ -208,24 +208,55 @@ class LearningPlanRequest(BaseModel):
     user_background: Optional[str] = Field(default="")
     assessment_result_id: Optional[str] = None  # Link to assessment result for personalization
 
+# New structured content models
+class ChapterSection(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    title: str
+    content: str
+    code_examples: List[str] = Field(default_factory=list)
+    key_concepts: List[str] = Field(default_factory=list)
+    resources: List[Dict[str, str]] = Field(default_factory=list)  # {"type": "video", "title": "...", "url": "..."}
+    estimated_time: int = 10  # minutes
+    quiz_questions: List[Dict[str, Any]] = Field(default_factory=list)
+    
+class LearningChapter(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    chapter_number: int
+    title: str
+    description: str
+    sections: List[ChapterSection]
+    estimated_time: int = 60  # minutes
+    prerequisites: List[str] = Field(default_factory=list)
+    learning_objectives: List[str] = Field(default_factory=list)
+    
+class TableOfContents(BaseModel):
+    chapters: List[Dict[str, Any]]  # Simplified structure for TOC approval
+    total_chapters: int
+    total_estimated_time: int
+    difficulty_level: str
+    
 class LearningPlan(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     topic: str
     level: str
     duration_weeks: int
     focus_areas: List[str]
-    curriculum: str
+    curriculum: str  # Keep for backward compatibility
+    table_of_contents: Optional[TableOfContents] = None
+    chapters: List[LearningChapter] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     user_background: Optional[str] = Field(default="")
     assessment_result_id: Optional[str] = None
     approved: bool = Field(default=False)
+    toc_approved: bool = Field(default=False)  # New field for TOC approval
     personalization_notes: Optional[str] = None
 
 class LearningPlanResponse(BaseModel):
     success: bool
     plan_id: str
     curriculum: str
+    table_of_contents: Optional[TableOfContents] = None
     topic: str
     level: str
     duration_weeks: int
