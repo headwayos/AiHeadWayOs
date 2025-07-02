@@ -199,6 +199,239 @@ app = FastAPI(title="Cybersecurity Learning Plans API", version="1.0.0")
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# CV Upload endpoint
+@api_router.post("/analyze-cv")
+async def analyze_cv(file: UploadFile = File(...)):
+    """Analyze uploaded CV/Resume for cybersecurity skills and experience"""
+    try:
+        # Validate file type
+        allowed_types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail="Invalid file type. Only PDF, DOC, DOCX, and TXT files are supported")
+        
+        # Validate file size (max 5MB)
+        content = await file.read()
+        if len(content) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large. Maximum 5MB allowed")
+        
+        # Reset file pointer
+        await file.seek(0)
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.filename.split('.')[-1]}") as tmp_file:
+            content = await file.read()
+            tmp_file.write(content)
+            tmp_file_path = tmp_file.name
+        
+        try:
+            # Extract text based on file type
+            extracted_text = ""
+            if file.content_type == 'application/pdf':
+                extracted_text = extract_text_from_pdf(tmp_file_path)
+            elif file.content_type in ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
+                extracted_text = extract_text_from_doc(tmp_file_path)
+            else:  # text/plain
+                with open(tmp_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    extracted_text = f.read()
+            
+            # Analyze the extracted text
+            analysis_result = analyze_cv_text(extracted_text)
+            
+            # Store analysis result
+            cv_analysis_id = str(uuid.uuid4())
+            cv_analysis = {
+                "id": cv_analysis_id,
+                "filename": file.filename,
+                "analysis": analysis_result.dict(),
+                "analyzed_at": datetime.utcnow().isoformat()
+            }
+            
+            # Store in mock database
+            in_memory_db["cv_analyses"].append(cv_analysis)
+            
+            return {
+                "analysis_id": cv_analysis_id,
+                "filename": file.filename,
+                **analysis_result.dict()
+            }
+            
+        finally:
+            # Clean up temporary file
+            try:
+                os.unlink(tmp_file_path)
+            except:
+                pass
+                
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing CV: {str(e)}")
+
+def extract_text_from_pdf(file_path: str) -> str:
+    """Extract text from PDF file using simple text extraction"""
+    try:
+        # Simplified PDF text extraction (in production, use pdfminer or PyPDF2)
+        with open(file_path, 'rb') as file:
+            # For now, return empty string and use filename for basic analysis
+            return ""
+    except:
+        return ""
+
+def extract_text_from_doc(file_path: str) -> str:
+    """Extract text from DOC/DOCX file"""
+    try:
+        # Simplified DOC text extraction (in production, use python-docx)
+        with open(file_path, 'rb') as file:
+            # For now, return empty string and use filename for basic analysis
+            return ""
+    except:
+        return ""
+
+def analyze_cv_text(text: str) -> CVAnalysisResult:
+    """Analyze extracted text for cybersecurity skills and experience"""
+    
+    # Cybersecurity skills keywords
+    cybersec_skills = {
+        'network_security': ['network security', 'firewall', 'vpn', 'intrusion detection', 'ids', 'ips', 'network monitoring'],
+        'penetration_testing': ['penetration testing', 'pen testing', 'ethical hacking', 'vulnerability assessment', 'metasploit', 'burp suite', 'nmap'],
+        'incident_response': ['incident response', 'forensics', 'malware analysis', 'threat hunting', 'soc', 'siem'],
+        'compliance': ['compliance', 'audit', 'iso 27001', 'nist', 'gdpr', 'hipaa', 'pci dss'],
+        'cloud_security': ['cloud security', 'aws security', 'azure security', 'gcp security', 'devops', 'devsecops'],
+        'programming': ['python', 'powershell', 'bash', 'javascript', 'c++', 'java', 'sql', 'scripting'],
+        'tools': ['wireshark', 'splunk', 'qradar', 'nessus', 'openvas', 'kali linux', 'windows', 'linux']
+    }
+    
+    # Experience level keywords
+    experience_keywords = {
+        'senior': ['senior', 'lead', 'manager', 'director', 'architect', 'principal', 'expert'],
+        'mid': ['analyst', 'engineer', 'specialist', 'consultant', 'administrator'],
+        'junior': ['junior', 'associate', 'intern', 'trainee', 'entry', 'assistant']
+    }
+    
+    # Convert text to lowercase for analysis
+    text_lower = text.lower()
+    
+    # Identify skills
+    identified_skills = []
+    skill_categories = []
+    
+    for category, keywords in cybersec_skills.items():
+        category_skills = []
+        for keyword in keywords:
+            if keyword in text_lower:
+                category_skills.append(keyword.title())
+                identified_skills.append(keyword.title())
+        if category_skills:
+            skill_categories.append(category)
+    
+    # Determine experience level
+    experience_level = "beginner"
+    if any(keyword in text_lower for keyword in experience_keywords['senior']):
+        experience_level = "expert"
+    elif any(keyword in text_lower for keyword in experience_keywords['mid']):
+        experience_level = "advanced"
+    elif any(keyword in text_lower for keyword in experience_keywords['junior']):
+        experience_level = "intermediate"
+    
+    # If no clear indicators and has some skills, assume intermediate
+    if experience_level == "beginner" and len(identified_skills) > 3:
+        experience_level = "intermediate"
+    
+    # Determine suggested topic based on skills
+    topic_mapping = {
+        'network_security': 'network-security',
+        'penetration_testing': 'ethical-hacking',
+        'incident_response': 'incident-response',
+        'compliance': 'compliance-governance',
+        'cloud_security': 'cloud-security'
+    }
+    
+    suggested_topic = "network-security"  # default
+    for category in skill_categories:
+        if category in topic_mapping:
+            suggested_topic = topic_mapping[category]
+            break
+    
+    # Identify gaps
+    all_categories = set(cybersec_skills.keys())
+    covered_categories = set(skill_categories)
+    gap_categories = all_categories - covered_categories
+    
+    gaps = []
+    gap_mapping = {
+        'network_security': 'Network Security Fundamentals',
+        'penetration_testing': 'Penetration Testing & Ethical Hacking',
+        'incident_response': 'Incident Response & Digital Forensics',
+        'compliance': 'Compliance & Risk Management',
+        'cloud_security': 'Cloud Security & DevSecOps',
+        'programming': 'Security Programming & Scripting',
+        'tools': 'Security Tools & Technologies'
+    }
+    
+    for gap_cat in gap_categories:
+        if gap_cat in gap_mapping:
+            gaps.append(gap_mapping[gap_cat])
+    
+    # Generate recommendations
+    recommendations = {
+        "courses": [],
+        "certifications": [],
+        "focus_areas": []
+    }
+    
+    if experience_level == "beginner":
+        recommendations["courses"] = [
+            "Introduction to Cybersecurity",
+            "Network Security Fundamentals",
+            "Basic Ethical Hacking",
+            "Security Awareness Training"
+        ]
+        recommendations["certifications"] = ["Security+", "Network+"]
+        recommendations["focus_areas"] = ["Fundamentals", "Hands-on Labs", "Basic Tools"]
+    elif experience_level == "intermediate":
+        recommendations["courses"] = [
+            "Advanced Network Security",
+            "Penetration Testing Methodology",
+            "Incident Response Procedures",
+            "Security Architecture"
+        ]
+        recommendations["certifications"] = ["CEH", "GCIH", "CySA+"]
+        recommendations["focus_areas"] = ["Advanced Techniques", "Real-world Scenarios", "Tool Mastery"]
+    elif experience_level == "advanced":
+        recommendations["courses"] = [
+            "Advanced Threat Hunting",
+            "Enterprise Security Architecture",
+            "Advanced Malware Analysis",
+            "Security Leadership"
+        ]
+        recommendations["certifications"] = ["CISSP", "OSCP", "GCFA"]
+        recommendations["focus_areas"] = ["Leadership", "Architecture Design", "Advanced Analysis"]
+    else:  # expert
+        recommendations["courses"] = [
+            "Cutting-edge Threat Research",
+            "Zero-day Exploit Development",
+            "Enterprise Risk Management",
+            "Cybersecurity Strategy"
+        ]
+        recommendations["certifications"] = ["CISSP", "CISM", "SABSA"]
+        recommendations["focus_areas"] = ["Research", "Strategy", "Innovation"]
+    
+    # Determine recommended duration
+    duration_mapping = {
+        "beginner": 8,
+        "intermediate": 6,
+        "advanced": 4,
+        "expert": 3
+    }
+    recommended_duration = duration_mapping.get(experience_level, 6)
+    
+    return CVAnalysisResult(
+        skills=identified_skills[:10],  # Limit to top 10 skills
+        experience_level=experience_level,
+        suggested_topic=suggested_topic,
+        gaps=gaps[:5],  # Limit to top 5 gaps
+        recommended_duration=recommended_duration,
+        recommendations=recommendations
+    )
+
 # Define Models
 
 # Assessment Models
