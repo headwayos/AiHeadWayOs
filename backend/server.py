@@ -57,7 +57,8 @@ in_memory_db = {
     "learning_sessions": [],
     "chat_messages": [],
     "user_progress": [],
-    "achievements": []
+    "achievements": [],
+    "cv_analyses": []  # For storing CV analysis results
 }
 
 class MockCollection:
