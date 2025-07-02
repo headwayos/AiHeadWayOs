@@ -17,6 +17,15 @@ import re
 import tempfile
 import shutil
 
+# CV Analysis Models
+class CVAnalysisResult(BaseModel):
+    skills: List[str] = []
+    experience_level: str = "beginner"
+    suggested_topic: str = "network-security"
+    gaps: List[str] = []
+    recommended_duration: int = 4
+    recommendations: Dict[str, List[str]] = {}
+
 # Mock database for this example (replace with actual database in production)
 assessments_db = {}
 assessment_results_db = {}
