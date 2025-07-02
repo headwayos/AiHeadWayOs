@@ -1570,4 +1570,4 @@ def run_specific_tests():
     return test_results
 
 if __name__ == "__main__":
-    run_specific_tests()
+    run_comprehensive_tests()
