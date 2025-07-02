@@ -5,7 +5,7 @@
 All backend APIs for the enhanced cybersecurity learning platform have been thoroughly tested and are now working correctly. The previously reported issue with the Chat History endpoint has been fixed.
 
 ## Test Environment
-- Backend URL: https://5aa11b93-e9fc-4541-a553-93e29ea9395a.preview.emergentagent.com/api
+- Backend URL: https://411f0a3b-9180-47f5-aaac-f624c160f184.preview.emergentagent.com/api
 - Testing Tools: Python requests library, custom test scripts
 
 ## Critical APIs Tested
