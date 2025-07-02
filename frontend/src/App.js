@@ -165,17 +165,6 @@ function App() {
         if (generatedPlan) setCurrentFlow(FLOW_STEPS.ROADMAP);
         else addNotification('Complete assessment first to generate roadmap', 'warning');
         break;
-      case 'enhanced_roadmap':
-        if (generatedPlan) {
-          setCurrentFlow(FLOW_STEPS.ROADMAP);
-          setEnhancedMode(true);
-        } else addNotification('Complete assessment first to access enhanced roadmap', 'warning');
-        break;
-      case 'visual_map':
-        if (generatedPlan) {
-          setCurrentFlow(FLOW_STEPS.VISUAL_MAP);
-        } else addNotification('Complete assessment first to access visual map', 'warning');
-        break;
       case 'notebook':
         if (generatedPlan) setCurrentFlow(FLOW_STEPS.NOTEBOOK);
         else addNotification('Complete assessment first to access notebook', 'warning');
@@ -194,14 +183,45 @@ function App() {
         setEnhancedMode(!enhancedMode);
         addNotification(`${enhancedMode ? 'Standard' : 'Enhanced'} mode activated`, 'info');
         break;
-      case 'chat':
-        // Toggle AI chat in current context
-        addNotification('AI chat activated in current view', 'info');
+      case 'export':
+        handleExportPlan();
+        break;
+      case 'help':
+        addNotification('Voice commands: "start assessment", "show roadmap", "view progress"', 'info');
         break;
       case 'reset':
         resetFlow();
         break;
     }
+  };
+
+  const handleVoiceCommand = (commandId) => {
+    handleCommandPaletteAction(commandId);
+  };
+
+  const handleExportPlan = () => {
+    if (!generatedPlan) {
+      addNotification('No learning plan to export', 'warning');
+      return;
+    }
+    
+    const exportData = {
+      plan: generatedPlan,
+      progress: userProgress,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cyberlearn-plan-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    addNotification('📤 Learning plan exported successfully!', 'success');
   };
 
   // Enhanced flow handlers for multiple entry gates
