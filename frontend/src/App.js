@@ -567,7 +567,7 @@ const ProgressView = ({ userProgress, generatedPlan, onBack, addNotification }) 
   );
 };
 
-// Plan Generation Component (Simplified)
+// EMERGENT-style Plan Generation Component
 const PlanGeneration = ({ assessmentResult, careerCanvasData, onPlanGenerated, onBack, addNotification }) => {
   const [loading, setLoading] = useState(false);
 
@@ -584,7 +584,7 @@ const PlanGeneration = ({ assessmentResult, careerCanvasData, onPlanGenerated, o
       });
 
       onPlanGenerated(response.data);
-      addNotification('Learning plan generated successfully!', 'success');
+      addNotification('✨ Learning plan generated successfully!', 'success');
     } catch (error) {
       console.error('Error generating plan:', error);
       addNotification('Failed to generate learning plan', 'error');
@@ -598,16 +598,18 @@ const PlanGeneration = ({ assessmentResult, careerCanvasData, onPlanGenerated, o
   }, []);
 
   return (
-    <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
-      <div className="glass-card p-8 text-center max-w-md">
-        <div className="text-4xl mb-4">🔄</div>
-        <h2 className="text-2xl font-bold text-white mb-4">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="emerald-card p-12 text-center max-w-md">
+        <div className="text-6xl mb-6">🗺️</div>
+        <h2 className="text-2xl font-bold text-slate-800 mb-4">
           Generating Your Learning Plan
         </h2>
-        <p className="text-gray-300 mb-6">
-          Please wait while we create your personalized cybersecurity curriculum...
+        <p className="text-slate-600 mb-8 leading-relaxed">
+          Please wait while we create your personalized cybersecurity curriculum based on your assessment...
         </p>
-        <div className="cyber-loader mx-auto"></div>
+        <div className="flex justify-center">
+          <div className="loading-pulse w-8 h-8 bg-blue-500 rounded-full"></div>
+        </div>
       </div>
     </div>
   );
