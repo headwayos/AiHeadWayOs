@@ -169,6 +169,17 @@ function App() {
         if (generatedPlan) setCurrentFlow(FLOW_STEPS.ROADMAP);
         else addNotification('Complete assessment first to generate roadmap', 'warning');
         break;
+      case 'enhanced_roadmap':
+        if (generatedPlan) {
+          setCurrentFlow(FLOW_STEPS.ROADMAP);
+          setEnhancedMode(true);
+        } else addNotification('Complete assessment first to access enhanced roadmap', 'warning');
+        break;
+      case 'visual_map':
+        if (generatedPlan) {
+          setCurrentFlow(FLOW_STEPS.VISUAL_MAP);
+        } else addNotification('Complete assessment first to access visual map', 'warning');
+        break;
       case 'notebook':
         if (generatedPlan) setCurrentFlow(FLOW_STEPS.NOTEBOOK);
         else addNotification('Complete assessment first to access notebook', 'warning');
@@ -178,6 +189,14 @@ function App() {
         break;
       case 'dashboard':
         setCurrentFlow(FLOW_STEPS.DASHBOARD);
+        break;
+      case 'ai_assistant':
+        setShowFloatingAI(!showFloatingAI);
+        addNotification(showFloatingAI ? 'AI Assistant hidden' : 'AI Assistant activated', 'info');
+        break;
+      case 'toggle_enhanced':
+        setEnhancedMode(!enhancedMode);
+        addNotification(`${enhancedMode ? 'Standard' : 'Enhanced'} mode activated`, 'info');
         break;
       case 'chat':
         // Toggle AI chat in current context
