@@ -693,21 +693,24 @@ function App() {
 
       default:
         return (
-          <SimplifiedOnboarding
-            onComplete={handleOnboardingComplete}
+          <MultiGateOnboarding
+            onComplete={handleMultiGateOnboardingComplete}
             addNotification={addNotification}
+            theme={theme}
+            toggleTheme={toggleTheme}
           />
         );
     }
   };
 
   return (
-    <div className="App min-h-screen bg-slate-50 relative">
+    <div className={`App min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'} relative`}>
       {/* Command Palette */}
       <CommandPalette
         isOpen={showCommandPalette}
         onClose={() => setShowCommandPalette(false)}
         onCommand={handleCommandPaletteAction}
+        theme={theme}
       />
       
       {/* EMERGENT-style Notifications */}
@@ -718,17 +721,17 @@ function App() {
         {renderCurrentFlow()}
       </div>
 
-      {/* Keyboard shortcut hint */}
+      {/* Enhanced Keyboard shortcut hint with theme support */}
       <div className="fixed bottom-4 right-4 z-30">
         <button
           onClick={() => setShowCommandPalette(true)}
-          className="bg-slate-800 text-white p-3 rounded-full shadow-clean-lg hover:bg-slate-700 transition-colors group"
+          className={`${theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-800 hover:bg-slate-700'} text-white p-3 rounded-full shadow-clean-lg transition-colors group`}
           title="Command Palette"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <div className="absolute bottom-full right-0 mb-2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+          <div className={`absolute bottom-full right-0 mb-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-800'} text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap`}>
             Press Ctrl+K
           </div>
         </button>
