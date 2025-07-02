@@ -18,9 +18,9 @@ import NotificationCenter from './components/NotificationCenter';
 
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
-// EMERGENT-style Flow management with Dark Theme Support
+// Modern AI Era Flow management
 const FLOW_STEPS = {
-  MULTI_GATE_ONBOARDING: 'multi_gate_onboarding',
+  ONBOARDING: 'onboarding',
   DASHBOARD: 'dashboard',
   ASSESSMENT: 'assessment',
   CAREER_CANVAS: 'career_canvas',
@@ -28,8 +28,7 @@ const FLOW_STEPS = {
   ROADMAP: 'roadmap',
   NOTEBOOK: 'notebook',
   LEARNING_SESSION: 'learning_session',
-  PROGRESS: 'progress',
-  VISUAL_MAP: 'visual_map'
+  PROGRESS: 'progress'
 };
 
 // Main App Component with EMERGENT Design + Dark Theme
