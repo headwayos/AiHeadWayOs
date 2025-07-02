@@ -823,7 +823,7 @@ const Dashboard = ({ userProgress, flowData, onStartLearning, onResetFlow, addNo
                   >
                     <div className="flex justify-between items-start mb-4">
                       <h4 className="font-bold text-white">
-                        {plan.topic.replace('-', ' ').toUpperCase()}
+                        {plan.topic?.replace('-', ' ')?.toUpperCase() || 'LEARNING PLAN'}
                       </h4>
                       {plan.approved && (
                         <span className="bg-accent-green text-dark-bg px-2 py-1 rounded text-xs font-bold">
