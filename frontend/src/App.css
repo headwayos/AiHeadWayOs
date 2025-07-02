@@ -49,27 +49,31 @@ body {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: 'JetBrains Mono', 'Fira Code', source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+  background-color: var(--slate-100);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
 }
 
-/* Custom scrollbar for better UX */
+/* EMERGENT-style scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #374151;
-  border-radius: 4px;
+  background: var(--slate-100);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #6b7280;
-  border-radius: 4px;
+  background: var(--slate-300);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--slate-400);
 }
 
 /* Smooth transitions for interactive elements */
