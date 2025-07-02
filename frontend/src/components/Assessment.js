@@ -373,7 +373,7 @@ const Assessment = ({ onAssessmentComplete, onBack, addNotification }) => {
                 question.question_type === 'coding' ? 'bg-cyber-purple text-white' :
                 'bg-cyber-pink text-white'
               }`}>
-                {question.question_type.toUpperCase()}
+                {question.question_type?.toUpperCase() || 'QUESTION'}
               </span>
               <span className="text-yellow-400 font-mono font-bold flex items-center">
                 <span className="mr-2">⭐</span>
