@@ -161,8 +161,9 @@ function App() {
       setCurrentFlow(FLOW_STEPS.ASSESSMENT);
     } else if (result.type === 'skip_assessment') {
       setGeneratedPlan(result.plan);
-      setCurrentFlow(FLOW_STEPS.LEARNING_SESSION);
+      setCurrentFlow(FLOW_STEPS.ROADMAP);
       setCurrentPlanId(result.plan.plan_id);
+      addNotification('🎉 Learning plan generated! Check out your roadmap.', 'success');
     }
   };
 
@@ -181,12 +182,19 @@ function App() {
   const handlePlanGenerated = (plan) => {
     setGeneratedPlan(plan);
     setCurrentPlanId(plan.plan_id);
-    setCurrentFlow(FLOW_STEPS.LEARNING_SESSION);
+    setCurrentFlow(FLOW_STEPS.ROADMAP);
+    addNotification('🗺️ Your personalized roadmap is ready!', 'success');
+  };
+
+  const handleChapterSelect = (chapterIndex, chapter) => {
+    setCurrentChapter(chapterIndex);
+    setCurrentFlow(FLOW_STEPS.NOTEBOOK);
+    addNotification(`📖 Starting: ${chapter.title}`, 'info');
   };
 
   const handleStartLearning = () => {
     if (generatedPlan) {
-      setCurrentFlow(FLOW_STEPS.LEARNING_SESSION);
+      setCurrentFlow(FLOW_STEPS.ROADMAP);
     } else {
       setCurrentFlow(FLOW_STEPS.ONBOARDING);
     }
@@ -201,14 +209,15 @@ function App() {
   };
 
   const resetFlow = () => {
-    localStorage.removeItem('cyberlearn_flow');
+    localStorage.removeItem('emerald_learn_flow');
     setCurrentFlow(FLOW_STEPS.ONBOARDING);
     setFlowData({});
     setAssessmentResult(null);
     setCareerCanvasData(null);
     setGeneratedPlan(null);
     setCurrentPlanId(null);
-    addNotification('Session reset! Starting fresh.', 'info');
+    setCurrentChapter(0);
+    addNotification('✨ Fresh start! Welcome back.', 'info');
   };
 
   // Render current flow step
