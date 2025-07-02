@@ -432,7 +432,7 @@ const PlanGeneration = ({
             <h3 className="text-xl font-bold text-accent-green mb-4">📊 ASSESSMENT RESULTS</h3>
             <div className="space-y-2">
               <p className="text-white">Score: <span className="accent-text-green">{assessmentResult.percentage}%</span></p>
-              <p className="text-white">Skill Level: <span className="accent-text-green">{assessmentResult.skill_level.toUpperCase()}</span></p>
+              <p className="text-white">Skill Level: <span className="accent-text-green">{assessmentResult?.skill_level?.toUpperCase() || 'N/A'}</span></p>
             </div>
           </div>
         )}
