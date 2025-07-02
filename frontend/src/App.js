@@ -44,6 +44,7 @@ function App() {
   const [careerCanvasData, setCareerCanvasData] = useState(null);
   const [generatedPlan, setGeneratedPlan] = useState(null);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [cvAnalysis, setCvAnalysis] = useState(null);
   const [aiContext, setAiContext] = useState({});
   const [showFloatingAI, setShowFloatingAI] = useState(true);
   const [enhancedMode, setEnhancedMode] = useState(true);
