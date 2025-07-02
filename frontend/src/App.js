@@ -272,33 +272,136 @@ function App() {
           />
         );
 
+      case FLOW_STEPS.ROADMAP:
+        return (
+          <div className="min-h-screen bg-slate-50">
+            {/* EMERGENT-style Navigation */}
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-16">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={handleBackToDashboard}
+                      className="flex items-center space-x-2 px-3 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span>Dashboard</span>
+                    </button>
+                    <div className="h-6 w-px bg-slate-300"></div>
+                    <h1 className="text-lg font-semibold text-slate-800">Learning Roadmap</h1>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentFlow(FLOW_STEPS.NOTEBOOK)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      📖 Start Learning
+                    </button>
+                    <button
+                      onClick={() => setShowCommandPalette(true)}
+                      className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                      title="Command Palette (Ctrl+K)"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <RoadmapView
+              plan={generatedPlan}
+              onChapterSelect={handleChapterSelect}
+              currentChapter={currentChapter}
+              userProgress={userProgress}
+            />
+          </div>
+        );
+
+      case FLOW_STEPS.NOTEBOOK:
+        return (
+          <div className="h-screen flex flex-col">
+            {/* Minimal Navigation */}
+            <div className="bg-white border-b border-slate-200 flex-shrink-0">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-12">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      onClick={() => setCurrentFlow(FLOW_STEPS.ROADMAP)}
+                      className="flex items-center space-x-2 px-2 py-1 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors text-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                      <span>Roadmap</span>
+                    </button>
+                    <div className="h-4 w-px bg-slate-300"></div>
+                    <span className="text-sm font-medium text-slate-700">Notebook</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => setShowCommandPalette(true)}
+                      className="p-1 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors"
+                      title="Command Palette (Ctrl+K)"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-1">
+              <NotebookInterface
+                planId={currentPlanId}
+                plan={generatedPlan}
+                currentChapter={currentChapter}
+                onComplete={() => {
+                  addNotification('🎉 Chapter completed! Great progress.', 'success');
+                  fetchUserProgress();
+                  setCurrentFlow(FLOW_STEPS.ROADMAP);
+                }}
+                addNotification={addNotification}
+              />
+            </div>
+          </div>
+        );
+
       case FLOW_STEPS.LEARNING_SESSION:
         return (
           <div className="learning-session-container">
             {/* Navigation Header */}
-            <div className="bg-dark-bg border-b border-gray-700 p-4">
+            <div className="bg-white border-b border-slate-200 p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={handleBackToDashboard}
-                    className="btn-cyber-secondary px-4 py-2"
+                    className="px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
                   >
                     ← Dashboard
                   </button>
-                  <h1 className="text-xl font-bold text-white">
+                  <h1 className="text-xl font-bold text-slate-800">
                     🛡️ CyberLearn Session
                   </h1>
                 </div>
                 <div className="flex items-center space-x-4">
                   <button
                     onClick={() => setCurrentFlow(FLOW_STEPS.PROGRESS)}
-                    className="btn-cyber-blue px-4 py-2"
+                    className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors"
                   >
                     📊 Progress
                   </button>
                   <button
                     onClick={resetFlow}
-                    className="btn-cyber-red px-4 py-2"
+                    className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors"
                   >
                     🔄 Reset
                   </button>
