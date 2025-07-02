@@ -832,7 +832,7 @@ const Dashboard = ({ userProgress, flowData, onStartLearning, onResetFlow, addNo
                       )}
                     </div>
                     <p className="text-gray-300 text-sm mb-4">
-                      {plan.level.toUpperCase()} • {plan.duration_weeks} weeks
+                      {plan.level?.toUpperCase() || 'BEGINNER'} • {plan.duration_weeks} weeks
                     </p>
                     {plan.approved && (
                       <button
