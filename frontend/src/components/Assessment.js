@@ -225,7 +225,7 @@ const Assessment = ({ onAssessmentComplete, onBack, addNotification }) => {
                       <div className={`font-bold font-mono ${
                         setupData.level === key ? 'text-neon-green' : 'text-white'
                       }`}>
-                        {value.toUpperCase()}
+                        {value?.toUpperCase() || key?.toUpperCase() || 'LEVEL'}
                       </div>
                     </div>
                   </label>
