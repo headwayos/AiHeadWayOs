@@ -1,5 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi import FastAPI, APIRouter, HTTPException, Request, File, UploadFile, Form
+from fastapi.responses import StreamingResponse, JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -13,6 +13,18 @@ from datetime import datetime
 import requests
 import asyncio
 import json
+import re
+import tempfile
+import shutil
+
+# CV Analysis Models
+class CVAnalysisResult(BaseModel):
+    skills: List[str] = []
+    experience_level: str = "beginner"
+    suggested_topic: str = "network-security"
+    gaps: List[str] = []
+    recommended_duration: int = 4
+    recommendations: Dict[str, List[str]] = {}
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
