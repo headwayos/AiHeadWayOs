@@ -122,7 +122,7 @@ const LearningSession = ({ planId, onBack, addNotification }) => {
   const sendWelcomeMessage = async (sessionId, planData) => {
     const welcomeMessage = `🛡️ **CYBER TUTOR AI READY** 
 
-Welcome to your personalized cybersecurity learning session! I'm your AI instructor for **${planData.topic.replace('-', ' ').toUpperCase()}**.
+Welcome to your personalized cybersecurity learning session! I'm your AI instructor for **${planData.topic?.replace('-', ' ')?.toUpperCase() || 'CYBERSECURITY'}**.
 
 **I'M HERE TO HELP:**
 🎯 I'll wait while you read each chapter
