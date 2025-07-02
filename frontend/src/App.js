@@ -12,6 +12,7 @@ import EnhancedDashboard from './components/EnhancedDashboard';
 import CommandPalette from './components/CommandPalette';
 import RoadmapView from './components/RoadmapView';
 import NotebookInterface from './components/NotebookInterface';
+import NotificationCenter from './components/NotificationCenter';
 
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
