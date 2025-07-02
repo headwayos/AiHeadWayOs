@@ -2,23 +2,19 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-// Import EMERGENT-style components
+// Import Modern AI Era Components
+import ModernOnboarding from './components/ModernOnboarding';
+import ModernDashboard from './components/ModernDashboard';
+import ModernCommandPalette from './components/ModernCommandPalette';
+import TextSelectionExplainer from './components/TextSelectionExplainer';
+import VoiceInterface from './components/VoiceInterface';
 import Assessment from './components/Assessment';
 import LearningSession from './components/LearningSession';
 import CareerCanvas from './components/CareerCanvas';
-import VisualLearningMap from './components/VisualLearningMap';
-import SimplifiedOnboarding from './components/SimplifiedOnboarding';
-import EnhancedDashboard from './components/EnhancedDashboard';
-import CommandPalette from './components/CommandPalette';
-import RoadmapView from './components/RoadmapView';
 import EnhancedRoadmapView from './components/EnhancedRoadmapView';
-import EnhancedVisualMap from './components/EnhancedVisualMap';
 import NotebookInterface from './components/NotebookInterface';
-import NotificationCenter from './components/NotificationCenter';
-import MultiGateOnboarding from './components/MultiGateOnboarding';
-import PreplacedVisualMap from './components/PreplacedVisualMap';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
-import ModernAIChat from './components/ModernAIChat';
+import NotificationCenter from './components/NotificationCenter';
 
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
