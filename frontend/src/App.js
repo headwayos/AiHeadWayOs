@@ -483,7 +483,7 @@ function App() {
   );
 }
 
-// Progress View Component
+// EMERGENT-style Progress View Component
 const ProgressView = ({ userProgress, generatedPlan, onBack, addNotification }) => {
   const [stats, setStats] = useState({
     totalXP: 0,
@@ -504,21 +504,21 @@ const ProgressView = ({ userProgress, generatedPlan, onBack, addNotification }) 
   }, [userProgress]);
 
   return (
-    <div className="min-h-screen bg-dark-bg p-6">
+    <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">
               📊 Learning Progress
             </h1>
-            <p className="text-gray-400 font-mono">
+            <p className="text-slate-600">
               Track your cybersecurity learning journey
             </p>
           </div>
           <button
             onClick={onBack}
-            className="btn-cyber-secondary px-6 py-3"
+            className="px-6 py-3 bg-slate-600 text-white hover:bg-slate-700 rounded-lg transition-colors"
           >
             ← Back to Dashboard
           </button>
@@ -526,31 +526,32 @@ const ProgressView = ({ userProgress, generatedPlan, onBack, addNotification }) 
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="glass-card p-6 text-center">
+          <div className="emerald-card text-center">
             <div className="text-3xl mb-2">⚡</div>
-            <div className="text-2xl font-bold text-neon-blue">{stats.totalXP}</div>
-            <div className="text-sm text-gray-400 font-mono">TOTAL XP</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.totalXP}</div>
+            <div className="text-sm text-slate-500">TOTAL XP</div>
           </div>
-          <div className="glass-card p-6 text-center">
+          <div className="emerald-card text-center">
             <div className="text-3xl mb-2">🎯</div>
-            <div className="text-2xl font-bold text-neon-green">{stats.completedCourses}</div>
-            <div className="text-sm text-gray-400 font-mono">COMPLETED</div>
+            <div className="text-2xl font-bold text-emerald-600">{stats.completedCourses}</div>
+            <div className="text-sm text-slate-500">COMPLETED</div>
           </div>
-          <div className="glass-card p-6 text-center">
+          <div className="emerald-card text-center">
             <div className="text-3xl mb-2">🔥</div>
-            <div className="text-2xl font-bold text-accent-green">{stats.streak}</div>
-            <div className="text-sm text-gray-400 font-mono">DAY STREAK</div>
+            <div className="text-2xl font-bold text-emerald-600">{stats.streak}</div>
+            <div className="text-sm text-slate-500">DAY STREAK</div>
           </div>
-          <div className="glass-card p-6 text-center">
+          <div className="emerald-card text-center">
             <div className="text-3xl mb-2">📈</div>
-            <div className="text-2xl font-bold text-cyber-purple">{stats.level}</div>
-            <div className="text-sm text-gray-400 font-mono">LEVEL</div>
+            <div className="text-2xl font-bold text-purple-600">{stats.level}</div>
+            <div className="text-sm text-slate-500">LEVEL</div>
           </div>
         </div>
 
         {/* Visual Learning Map */}
         {generatedPlan && (
-          <div className="glass-card p-6">
+          <div className="emerald-card">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">Learning Roadmap</h2>
             <VisualLearningMap
               planId={generatedPlan.plan_id}
               plan={generatedPlan}
