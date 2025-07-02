@@ -1368,6 +1368,149 @@ def test_topics_levels_validation():
         print(f"Topics levels validation request failed: {e}")
         return False
 
+def test_approve_toc(plan_id: str):
+    """Test the approve table of contents endpoint"""
+    try:
+        print(f"Testing TOC approval for plan ID: {plan_id}")
+        
+        # First, verify the plan exists
+        get_plan_response = requests.get(f"{API_BASE_URL}/learning-plans/{plan_id}", timeout=10)
+        if get_plan_response.status_code != 200:
+            print(f"Plan with ID {plan_id} not found: {get_plan_response.status_code} - {get_plan_response.text}")
+            return {
+                "success": False,
+                "status_code": get_plan_response.status_code,
+                "error": f"Plan not found: {get_plan_response.text}"
+            }
+        
+        # Now test the TOC approval endpoint
+        print(f"Sending TOC approval request for plan ID: {plan_id}")
+        response = requests.post(
+            f"{API_BASE_URL}/approve-toc/{plan_id}",
+            timeout=10
+        )
+        
+        # Check if the request was successful
+        if response.status_code != 200:
+            print(f"Approve TOC failed with status code {response.status_code}: {response.text}")
+            return {
+                "success": False,
+                "status_code": response.status_code,
+                "error": response.text
+            }
+        
+        data = response.json()
+        
+        # Check if the response contains the expected fields
+        expected_fields = ["success", "plan_id", "toc_approved"]
+        for field in expected_fields:
+            if field not in data:
+                print(f"Approve TOC response missing expected field '{field}': {data}")
+                return False
+        
+        # Check if the TOC was approved
+        if not data["toc_approved"]:
+            print(f"TOC was not approved: {data}")
+            return False
+        
+        print(f"Successfully approved TOC for learning plan with ID: {data['plan_id']}")
+        return {
+            "success": True,
+            "plan_id": data["plan_id"],
+            "toc_approved": data["toc_approved"]
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Approve TOC request failed: {e}")
+        return False
+
+def test_get_chapter_content(plan_id: str, chapter_id: str):
+    """Test the get chapter content endpoint"""
+    try:
+        print(f"Testing chapter content retrieval for plan ID: {plan_id}, chapter ID: {chapter_id}")
+        
+        response = requests.get(f"{API_BASE_URL}/learning-plans/{plan_id}/chapter/{chapter_id}", timeout=10)
+        
+        # Check if the request was successful
+        if response.status_code != 200:
+            print(f"Get chapter content failed with status code {response.status_code}: {response.text}")
+            return {
+                "success": False,
+                "status_code": response.status_code,
+                "error": response.text
+            }
+        
+        data = response.json()
+        
+        # Check if the response contains the expected fields
+        expected_fields = ["id", "chapter_number", "title", "description", "sections", "estimated_time"]
+        for field in expected_fields:
+            if field not in data:
+                print(f"Chapter content response missing expected field '{field}': {data}")
+                return False
+        
+        # Check if sections is a list
+        if not isinstance(data["sections"], list):
+            print(f"Sections is not a list: {data}")
+            return False
+        
+        # If there are sections, check the structure of the first section
+        if data["sections"]:
+            first_section = data["sections"][0]
+            expected_section_fields = ["id", "title", "content", "estimated_time"]
+            for field in expected_section_fields:
+                if field not in first_section:
+                    print(f"Section missing expected field '{field}': {first_section}")
+                    return False
+        
+        print(f"Retrieved chapter content for chapter ID: {data['id']}, title: {data['title']}")
+        return {
+            "success": True,
+            "chapter_id": data["id"],
+            "title": data["title"],
+            "sections_count": len(data["sections"]),
+            "estimated_time": data["estimated_time"]
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Get chapter content request failed: {e}")
+        return False
+
+def test_get_section_content(plan_id: str, section_id: str):
+    """Test the get section content endpoint"""
+    try:
+        print(f"Testing section content retrieval for plan ID: {plan_id}, section ID: {section_id}")
+        
+        response = requests.get(f"{API_BASE_URL}/learning-plans/{plan_id}/section/{section_id}", timeout=10)
+        
+        # Check if the request was successful
+        if response.status_code != 200:
+            print(f"Get section content failed with status code {response.status_code}: {response.text}")
+            return {
+                "success": False,
+                "status_code": response.status_code,
+                "error": response.text
+            }
+        
+        data = response.json()
+        
+        # Check if the response contains the expected fields
+        expected_fields = ["id", "title", "content", "estimated_time"]
+        for field in expected_fields:
+            if field not in data:
+                print(f"Section content response missing expected field '{field}': {data}")
+                return False
+        
+        print(f"Retrieved section content for section ID: {data['id']}, title: {data['title']}")
+        return {
+            "success": True,
+            "section_id": data["id"],
+            "title": data["title"],
+            "content_length": len(data["content"]),
+            "estimated_time": data["estimated_time"]
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Get section content request failed: {e}")
+        return False
+
 def run_specific_tests():
     """Run specific tests based on the review request"""
     print(f"\n{'='*80}\nRunning Specific Tests for Assessment Skip Flow and Topics/Levels\n{'='*80}")
