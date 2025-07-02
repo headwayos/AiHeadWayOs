@@ -1223,5 +1223,179 @@ def run_comprehensive_tests():
     
     return test_results
 
+def test_generate_learning_plan_with_skip_assessment():
+    """Test the generate learning plan endpoint with skip_assessment=true"""
+    try:
+        # Sample request data with skip_assessment=true
+        request_data = {
+            "topic": "network-security",
+            "level": "beginner",
+            "duration_weeks": 4,
+            "focus_areas": ["Hands-on Labs", "Certification Preparation"],
+            "user_background": "I have basic IT knowledge but new to cybersecurity",
+            "skip_assessment": True,
+            "career_goal": "student",
+            "user_preferences": {
+                "current_role": "Student",
+                "experience_years": 0
+            }
+        }
+        
+        print(f"Sending learning plan request with skip_assessment=true: {json.dumps(request_data, indent=2)}")
+        
+        response = requests.post(
+            f"{API_BASE_URL}/generate-learning-plan",
+            json=request_data,
+            timeout=300  # 5 minutes timeout for generation
+        )
+        
+        # Check if the request was successful
+        if response.status_code != 200:
+            print(f"Generate learning plan with skip_assessment failed with status code {response.status_code}: {response.text}")
+            return {
+                "success": False,
+                "status_code": response.status_code,
+                "error": response.text
+            }
+        
+        data = response.json()
+        
+        # Check if the response contains the expected fields
+        expected_fields = ["success", "plan_id", "curriculum", "topic", "level", "duration_weeks", "table_of_contents"]
+        for field in expected_fields:
+            if field not in data:
+                print(f"Learning plan response missing expected field '{field}': {data}")
+                return False
+        
+        # Check if the plan_id is a valid UUID
+        try:
+            uuid_obj = uuid.UUID(data["plan_id"])
+            if str(uuid_obj) != data["plan_id"]:
+                print(f"plan_id is not a valid UUID: {data['plan_id']}")
+                return False
+        except ValueError:
+            print(f"plan_id is not a valid UUID: {data['plan_id']}")
+            return False
+        
+        # Check if table_of_contents has the expected structure
+        toc = data["table_of_contents"]
+        if not isinstance(toc, dict):
+            print(f"table_of_contents is not a dictionary: {toc}")
+            return False
+        
+        expected_toc_fields = ["chapters", "total_chapters", "total_estimated_time", "difficulty_level"]
+        for field in expected_toc_fields:
+            if field not in toc:
+                print(f"table_of_contents missing expected field '{field}': {toc}")
+                return False
+        
+        # Specifically check that difficulty_level is not null/undefined
+        if not toc["difficulty_level"]:
+            print(f"table_of_contents.difficulty_level is null or empty: {toc}")
+            return False
+        
+        # Check if the topic and level fields are strings
+        if not isinstance(data["topic"], str) or not data["topic"]:
+            print(f"topic is not a valid string: {data['topic']}")
+            return False
+            
+        if not isinstance(data["level"], str) or not data["level"]:
+            print(f"level is not a valid string: {data['level']}")
+            return False
+        
+        print(f"Generated learning plan with skip_assessment=true, ID: {data['plan_id']}")
+        print(f"Table of Contents: {toc['total_chapters']} chapters, {toc['total_estimated_time']} minutes estimated time")
+        print(f"Difficulty level: {toc['difficulty_level']}")
+        
+        return {
+            "success": True,
+            "plan_id": data["plan_id"],
+            "curriculum_length": len(data["curriculum"]),
+            "topic": data["topic"],
+            "level": data["level"],
+            "total_chapters": toc["total_chapters"],
+            "total_estimated_time": toc["total_estimated_time"],
+            "difficulty_level": toc["difficulty_level"]
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Generate learning plan with skip_assessment request failed: {e}")
+        return False
+
+def test_topics_levels_validation():
+    """Test the topics endpoint to verify it returns proper levels object"""
+    try:
+        response = requests.get(f"{API_BASE_URL}/topics", timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Check if the response contains the expected fields
+        if not all(key in data for key in ["topics", "levels"]):
+            print(f"Topics response missing expected fields: {data}")
+            return False
+        
+        # Check if levels is a dictionary
+        if not isinstance(data["levels"], dict):
+            print(f"Levels is not a dictionary: {data}")
+            return False
+        
+        # Check if all level values are non-empty strings
+        for level_key, level_value in data["levels"].items():
+            if not isinstance(level_value, str) or not level_value:
+                print(f"Level '{level_key}' has invalid value: {level_value}")
+                return False
+        
+        # Check if topics is a dictionary
+        if not isinstance(data["topics"], dict):
+            print(f"Topics is not a dictionary: {data}")
+            return False
+        
+        # Check if all topic values are non-empty strings
+        for topic_key, topic_value in data["topics"].items():
+            if not isinstance(topic_value, str) or not topic_value:
+                print(f"Topic '{topic_key}' has invalid value: {topic_value}")
+                return False
+        
+        print(f"Topics endpoint returns proper levels object with {len(data['levels'])} levels")
+        print(f"All level values are valid strings: {list(data['levels'].keys())}")
+        
+        return {
+            "success": True,
+            "topics_count": len(data["topics"]),
+            "levels_count": len(data["levels"]),
+            "levels": list(data["levels"].keys())
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Topics levels validation request failed: {e}")
+        return False
+
+def run_specific_tests():
+    """Run specific tests based on the review request"""
+    print(f"\n{'='*80}\nRunning Specific Tests for Assessment Skip Flow and Topics/Levels\n{'='*80}")
+    print(f"API Base URL: {API_BASE_URL}")
+    
+    # Test topics and levels validation
+    run_test("Topics and Levels Validation", test_topics_levels_validation)
+    
+    # Test generate learning plan with skip_assessment=true
+    skip_result = run_test("Generate Learning Plan with Skip Assessment", test_generate_learning_plan_with_skip_assessment)
+    
+    # Print summary
+    print(f"\n{'='*80}\nTest Summary\n{'='*80}")
+    print(f"Total tests: {test_results['total_tests']}")
+    print(f"Passed tests: {test_results['passed_tests']}")
+    print(f"Failed tests: {test_results['failed_tests']}")
+    print(f"Success rate: {(test_results['passed_tests'] / test_results['total_tests']) * 100:.2f}%")
+    
+    # Print detailed results
+    print(f"\n{'='*80}\nDetailed Test Results\n{'='*80}")
+    for i, test in enumerate(test_results["test_details"], 1):
+        print(f"{i}. {test['name']}: {test['status']}")
+        if "duration" in test:
+            print(f"   Duration: {test['duration']}s")
+        if test["status"] != "PASSED":
+            print(f"   Details: {json.dumps(test['details'], indent=2)}")
+    
+    return test_results
+
 if __name__ == "__main__":
-    run_comprehensive_tests()
+    run_specific_tests()
