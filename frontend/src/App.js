@@ -530,10 +530,25 @@ function App() {
                 onComplete={() => {
                   addNotification('🎉 Chapter completed! Great progress.', 'success');
                   fetchUserProgress();
+                  
+                  // Update AI context
+                  setAiContext(prev => ({
+                    ...prev,
+                    progress: 100,
+                    timeSpent: (prev.timeSpent || 0) + 30
+                  }));
+                  
                   setCurrentFlow(FLOW_STEPS.ROADMAP);
                 }}
                 addNotification={addNotification}
                 theme={theme}
+                onProgressUpdate={(progress) => {
+                  setAiContext(prev => ({
+                    ...prev,
+                    progress,
+                    timeSpent: (prev.timeSpent || 0) + 1
+                  }));
+                }}
               />
             </div>
           </div>
