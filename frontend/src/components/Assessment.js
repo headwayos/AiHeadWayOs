@@ -573,7 +573,7 @@ const Assessment = ({ onAssessmentComplete, onBack, addNotification }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <span className="bg-neon-blue text-dark-bg px-6 py-3 rounded-full font-mono font-bold text-lg">
-                  {results.skill_level.toUpperCase()}
+                  {results.skill_level?.toUpperCase() || 'BEGINNER'}
                 </span>
                 <div className="text-sm text-gray-300">
                   <div className="font-mono">Assessment-based recommendation</div>
