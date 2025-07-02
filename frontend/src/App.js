@@ -281,7 +281,7 @@ function App() {
     if (generatedPlan) {
       setCurrentFlow(FLOW_STEPS.ROADMAP);
     } else {
-      setCurrentFlow(FLOW_STEPS.ONBOARDING);
+      setCurrentFlow(FLOW_STEPS.MULTI_GATE_ONBOARDING);
     }
   };
 
@@ -295,13 +295,17 @@ function App() {
 
   const resetFlow = () => {
     localStorage.removeItem('emerald_learn_flow');
-    setCurrentFlow(FLOW_STEPS.ONBOARDING);
+    localStorage.removeItem('emerald_theme');
+    setCurrentFlow(FLOW_STEPS.MULTI_GATE_ONBOARDING);
     setFlowData({});
     setAssessmentResult(null);
     setCareerCanvasData(null);
     setGeneratedPlan(null);
     setCurrentPlanId(null);
     setCurrentChapter(0);
+    setCvAnalysis(null);
+    setTheme('light');
+    document.documentElement.setAttribute('data-theme', 'light');
     addNotification('✨ Fresh start! Welcome back.', 'info');
   };
 
