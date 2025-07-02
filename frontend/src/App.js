@@ -651,7 +651,7 @@ const PlanGeneration = ({
               {generatedPlan.toc_approved && (
                 <div className="glass-card p-6">
                   <h3 className="text-xl font-semibold text-white mb-4">
-                    {topics[generatedPlan.topic]} • {levels[generatedPlan.level].toUpperCase()}
+                    {topics[generatedPlan.topic] || generatedPlan.topic} • {(levels[generatedPlan.level] || generatedPlan.level)?.toUpperCase() || 'BEGINNER'}
                   </h3>
                   <p className="text-gray-300 mb-4">
                     DURATION: {generatedPlan.duration_weeks} WEEKS
