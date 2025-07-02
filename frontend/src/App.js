@@ -172,9 +172,69 @@ function App() {
       case 'dashboard':
         setCurrentFlow(FLOW_STEPS.DASHBOARD);
         break;
+      case 'chat':
+        // Toggle AI chat in current context
+        addNotification('AI chat activated in current view', 'info');
+        break;
       case 'reset':
         resetFlow();
         break;
+    }
+  };
+
+  // Enhanced flow handlers for multiple entry gates
+  const handleMultiGateOnboardingComplete = (result) => {
+    setFlowData(result.data);
+    setCvAnalysis(result.cv_analysis || null);
+    
+    switch (result.type) {
+      case 'assessment':
+        setCurrentFlow(FLOW_STEPS.ASSESSMENT);
+        break;
+      case 'skip_assessment':
+        setGeneratedPlan(result.plan);
+        setCurrentFlow(FLOW_STEPS.ROADMAP);
+        setCurrentPlanId(result.plan?.plan_id);
+        addNotification('🎉 Learning plan generated! Check out your roadmap.', 'success');
+        break;
+      case 'cv_based':
+        // Generate plan based on CV analysis
+        generateCvBasedPlan(result);
+        break;
+      case 'visual_map':
+        setGeneratedPlan(result.plan);
+        setCurrentFlow(FLOW_STEPS.ROADMAP);
+        setCurrentPlanId(result.plan?.plan_id);
+        addNotification('🗺️ Visual map selection complete! Your roadmap is ready.', 'success');
+        break;
+      case 'back':
+        setCurrentFlow(FLOW_STEPS.MULTI_GATE_ONBOARDING);
+        break;
+      default:
+        setCurrentFlow(FLOW_STEPS.DASHBOARD);
+    }
+  };
+
+  const generateCvBasedPlan = async (result) => {
+    try {
+      const cvData = result.data.cv_analysis;
+      const response = await axios.post(`${API}/generate-learning-plan`, {
+        topic: cvData.suggested_topic,
+        level: cvData.experience_level,
+        duration_weeks: cvData.recommended_duration,
+        focus_areas: cvData.gaps.slice(0, 3), // Focus on top 3 gaps
+        user_background: `CV Analysis: ${cvData.skills.join(', ')}`,
+        skip_assessment: true
+      });
+
+      setGeneratedPlan(response.data);
+      setCurrentPlanId(response.data.plan_id);
+      setCurrentFlow(FLOW_STEPS.ROADMAP);
+      addNotification('🎯 CV-based learning plan generated!', 'success');
+    } catch (error) {
+      console.error('Error generating CV-based plan:', error);
+      addNotification('Failed to generate CV-based plan', 'error');
+      setCurrentFlow(FLOW_STEPS.DASHBOARD);
     }
   };
 
