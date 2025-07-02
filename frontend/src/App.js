@@ -281,6 +281,16 @@ function App() {
   const handleChapterSelect = (chapterIndex, chapter) => {
     setCurrentChapter(chapterIndex);
     setCurrentFlow(FLOW_STEPS.NOTEBOOK);
+    
+    // Update AI context with chapter information
+    setAiContext({
+      chapter: chapter.title,
+      chapterIndex,
+      progress: 0,
+      section: null,
+      timeSpent: 0
+    });
+    
     addNotification(`📖 Starting: ${chapter.title}`, 'info');
   };
 
