@@ -1162,6 +1162,9 @@ def run_comprehensive_tests():
     # Test generate learning plan
     plan_result = run_test("Generate Learning Plan", test_generate_learning_plan)
     
+    # Test generate learning plan with skip_assessment=true
+    skip_result = run_test("Generate Learning Plan with Skip Assessment", test_generate_learning_plan_with_skip_assessment)
+    
     # If assessment result is available, test personalized learning plan
     if assessment_result_id:
         run_test("Generate Learning Plan with Assessment", test_generate_learning_plan_with_assessment, assessment_result_id)
@@ -1171,11 +1174,36 @@ def run_comprehensive_tests():
     if plan_result and plan_result.get("success"):
         plan_id = plan_result.get("plan_id")
         
+        # Test TOC approval
+        toc_approval_result = run_test("Approve Table of Contents", test_approve_toc, plan_id)
+        
         # Test plan approval
         approval_result = run_test("Approve Learning Plan", test_approve_learning_plan, plan_id)
         
         # Test learning session management
         session_result = run_test("Start Learning Session", test_start_learning_session, plan_id)
+        
+        # Test chapter content
+        # First, get the plan to extract a chapter ID
+        try:
+            plan_response = requests.get(f"{API_BASE_URL}/learning-plans/{plan_id}", timeout=10)
+            if plan_response.status_code == 200:
+                plan_data = plan_response.json()
+                if "table_of_contents" in plan_data and "chapters" in plan_data["table_of_contents"]:
+                    chapters = plan_data["table_of_contents"]["chapters"]
+                    if chapters and len(chapters) > 0:
+                        chapter_id = chapters[0]["id"]
+                        # Test chapter content
+                        chapter_result = run_test("Get Chapter Content", test_get_chapter_content, plan_id, chapter_id)
+                        
+                        # If chapter content retrieval succeeded, test section content
+                        if chapter_result and chapter_result.get("success"):
+                            chapter_data = chapter_result.get("chapter_data", {})
+                            if "sections" in chapter_data and chapter_data["sections"] and len(chapter_data["sections"]) > 0:
+                                section_id = chapter_data["sections"][0]["id"]
+                                run_test("Get Section Content", test_get_section_content, plan_id, section_id)
+        except Exception as e:
+            print(f"Error retrieving chapter/section IDs: {e}")
         
         session_id = None
         if session_result and session_result.get("success"):
