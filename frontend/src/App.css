@@ -76,64 +76,170 @@ code {
   background: var(--slate-400);
 }
 
-/* Smooth transitions for interactive elements */
-button, input, select, textarea {
-  transition: all 0.2s ease-in-out;
+/* EMERGENT-style smooth interactions */
+button, input, select, textarea, .interactive {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Custom button hover effects */
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+/* Clean button interactions */
+button:hover:not(:disabled) {
+  transform: translateY(-0.5px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Focus states for accessibility */
+button:active:not(:disabled) {
+  transform: translateY(0px);
+}
+
+/* EMERGENT-style focus states */
 button:focus, input:focus, select:focus, textarea:focus {
   outline: none;
-  ring: 2px;
-  ring-color: #3b82f6;
+  box-shadow: 0 0 0 2px var(--blue-500), 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
-/* Loading animation */
-@keyframes spin {
+/* Dynamic ray borders for chat */
+.chat-border {
+  position: relative;
+  border: 1px solid var(--slate-200);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.chat-border::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  background: var(--ray-primary);
+  border-radius: 0.75rem;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.chat-border:hover::before,
+.chat-border:focus-within::before {
+  opacity: 1;
+}
+
+/* Command palette animations */
+@keyframes slideDown {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(-10px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.animate-spin {
-  animation: spin 1s linear infinite;
+.command-palette {
+  animation: slideDown 0.2s ease-out;
 }
 
-/* Custom gradient backgrounds */
-.gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* Notebook-style content */
+.notebook-content {
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Card hover effects */
-.card-hover {
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+/* Roadmap visual elements */
+.roadmap-node {
+  position: relative;
+  background: white;
+  border: 2px solid var(--slate-200);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
 }
 
-.card-hover:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+.roadmap-node:hover {
+  border-color: var(--blue-500);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
-/* Text selection */
+.roadmap-node.completed {
+  border-color: var(--emerald-500);
+  background: var(--emerald-50);
+}
+
+.roadmap-node.active {
+  border-color: var(--blue-500);
+  background: var(--blue-50);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Progress indicators */
+.progress-ring {
+  transform: rotate(-90deg);
+}
+
+.progress-ring circle {
+  transition: stroke-dashoffset 0.5s ease-in-out;
+}
+
+/* EMERGENT-style cards */
+.emerald-card {
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.emerald-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Text selection with EMERGENT colors */
 ::selection {
-  background-color: #3b82f6;
-  color: white;
+  background-color: var(--blue-100);
+  color: var(--slate-700);
 }
 
-/* Custom spacing for better mobile experience */
+/* Loading states */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Mobile-first responsive design */
 @media (max-width: 768px) {
   .container {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+  
+  .notebook-content {
+    margin: 0.5rem;
+    border-radius: 0.5rem;
+  }
+  
+  .roadmap-node {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Dark mode support for specific elements */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-support {
+    --slate-50: #0f172a;
+    --slate-100: #1e293b;
+    --slate-200: #334155;
   }
 }
 
