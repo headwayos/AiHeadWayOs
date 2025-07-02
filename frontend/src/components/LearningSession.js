@@ -395,7 +395,7 @@ I'm watching your progress and ready to assist whenever you need! 📖✨`;
                 </h1>
                 {chapterContent && (
                   <p className="text-gray-400 text-sm font-mono">
-                    {plan?.topic.replace('-', ' ').toUpperCase()} • {chapterContent.estimated_time || '15 min'} read
+                    {plan?.topic?.replace('-', ' ')?.toUpperCase() || 'CYBERSECURITY'} • {chapterContent.estimated_time || '15 min'} read
                   </p>
                 )}
               </div>
