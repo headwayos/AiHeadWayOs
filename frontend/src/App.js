@@ -50,6 +50,9 @@ function App() {
   const [generatedPlan, setGeneratedPlan] = useState(null);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [cvAnalysis, setCvAnalysis] = useState(null);
+  const [aiContext, setAiContext] = useState({});
+  const [showFloatingAI, setShowFloatingAI] = useState(true);
+  const [enhancedMode, setEnhancedMode] = useState(true);
 
   useEffect(() => {
     // Check for existing session
