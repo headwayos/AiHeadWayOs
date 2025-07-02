@@ -2,63 +2,112 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-// Import components
+// Import EMERGENT-style components
 import Assessment from './components/Assessment';
 import LearningSession from './components/LearningSession';
 import CareerCanvas from './components/CareerCanvas';
 import VisualLearningMap from './components/VisualLearningMap';
 import SimplifiedOnboarding from './components/SimplifiedOnboarding';
 import EnhancedDashboard from './components/EnhancedDashboard';
+import CommandPalette from './components/CommandPalette';
+import RoadmapView from './components/RoadmapView';
+import NotebookInterface from './components/NotebookInterface';
 
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
-// Flow management
+// EMERGENT-style Flow management
 const FLOW_STEPS = {
   ONBOARDING: 'onboarding',
   DASHBOARD: 'dashboard',
   ASSESSMENT: 'assessment',
   CAREER_CANVAS: 'career_canvas',
   PLAN_GENERATION: 'plan_generation',
+  ROADMAP: 'roadmap',
+  NOTEBOOK: 'notebook',
   LEARNING_SESSION: 'learning_session',
   PROGRESS: 'progress'
 };
 
-// Main App Component
+// Main App Component with EMERGENT Design
 function App() {
   const [currentFlow, setCurrentFlow] = useState(FLOW_STEPS.ONBOARDING);
   const [flowData, setFlowData] = useState({});
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
   const [currentPlanId, setCurrentPlanId] = useState(null);
+  const [currentChapter, setCurrentChapter] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [careerCanvasData, setCareerCanvasData] = useState(null);
   const [generatedPlan, setGeneratedPlan] = useState(null);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
 
   useEffect(() => {
     // Check for existing session
-    const savedFlow = localStorage.getItem('cyberlearn_flow');
+    const savedFlow = localStorage.getItem('emerald_learn_flow');
     if (savedFlow) {
       try {
         const flowState = JSON.parse(savedFlow);
         setCurrentFlow(flowState.step || FLOW_STEPS.ONBOARDING);
         setFlowData(flowState.data || {});
         setGeneratedPlan(flowState.plan || null);
+        setCurrentChapter(flowState.chapter || 0);
       } catch (e) {
         console.error('Error loading saved flow:', e);
       }
     }
     
     fetchUserProgress();
+    setupKeyboardShortcuts();
   }, []);
 
   // Save flow state
   useEffect(() => {
-    localStorage.setItem('cyberlearn_flow', JSON.stringify({
+    localStorage.setItem('emerald_learn_flow', JSON.stringify({
       step: currentFlow,
       data: flowData,
-      plan: generatedPlan
+      plan: generatedPlan,
+      chapter: currentChapter
     }));
-  }, [currentFlow, flowData, generatedPlan]);
+  }, [currentFlow, flowData, generatedPlan, currentChapter]);
+
+  const setupKeyboardShortcuts = () => {
+    const handleKeyDown = (e) => {
+      // Command palette shortcut
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(true);
+      }
+      
+      // Quick navigation shortcuts
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'd':
+            e.preventDefault();
+            setCurrentFlow(FLOW_STEPS.DASHBOARD);
+            break;
+          case 'r':
+            e.preventDefault();
+            if (generatedPlan) setCurrentFlow(FLOW_STEPS.ROADMAP);
+            break;
+          case 'n':
+            e.preventDefault();
+            if (generatedPlan) setCurrentFlow(FLOW_STEPS.NOTEBOOK);
+            break;
+          case 'p':
+            e.preventDefault();
+            setCurrentFlow(FLOW_STEPS.PROGRESS);
+            break;
+          case '/':
+            e.preventDefault();
+            // Toggle AI chat in current context
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  };
 
   const fetchUserProgress = async () => {
     try {
@@ -77,6 +126,31 @@ function App() {
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
     }, 5000);
+  };
+
+  const handleCommandPaletteAction = (commandId) => {
+    switch (commandId) {
+      case 'assessment':
+        setCurrentFlow(FLOW_STEPS.ASSESSMENT);
+        break;
+      case 'roadmap':
+        if (generatedPlan) setCurrentFlow(FLOW_STEPS.ROADMAP);
+        else addNotification('Complete assessment first to generate roadmap', 'warning');
+        break;
+      case 'notebook':
+        if (generatedPlan) setCurrentFlow(FLOW_STEPS.NOTEBOOK);
+        else addNotification('Complete assessment first to access notebook', 'warning');
+        break;
+      case 'progress':
+        setCurrentFlow(FLOW_STEPS.PROGRESS);
+        break;
+      case 'dashboard':
+        setCurrentFlow(FLOW_STEPS.DASHBOARD);
+        break;
+      case 'reset':
+        resetFlow();
+        break;
+    }
   };
 
   // Flow handlers
