@@ -11,10 +11,14 @@ import SimplifiedOnboarding from './components/SimplifiedOnboarding';
 import EnhancedDashboard from './components/EnhancedDashboard';
 import CommandPalette from './components/CommandPalette';
 import RoadmapView from './components/RoadmapView';
+import EnhancedRoadmapView from './components/EnhancedRoadmapView';
+import EnhancedVisualMap from './components/EnhancedVisualMap';
 import NotebookInterface from './components/NotebookInterface';
 import NotificationCenter from './components/NotificationCenter';
 import MultiGateOnboarding from './components/MultiGateOnboarding';
 import PreplacedVisualMap from './components/PreplacedVisualMap';
+import FloatingAIAssistant from './components/FloatingAIAssistant';
+import ModernAIChat from './components/ModernAIChat';
 
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
