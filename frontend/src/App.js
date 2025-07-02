@@ -789,7 +789,7 @@ const Dashboard = ({ userProgress, flowData, onStartLearning, onResetFlow, addNo
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-accent-teal">
-                    {flowData.assessmentResult.skill_level.toUpperCase()}
+                    {flowData.assessmentResult?.skill_level?.toUpperCase() || 'N/A'}
                   </div>
                   <div className="text-gray-300 text-sm">Skill Level</div>
                 </div>
