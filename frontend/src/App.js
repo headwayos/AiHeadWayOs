@@ -768,6 +768,15 @@ function App() {
       {/* EMERGENT-style Notifications */}
       <NotificationCenter notifications={notifications} />
       
+      {/* Floating AI Assistant */}
+      {showFloatingAI && generatedPlan && (
+        <FloatingAIAssistant
+          context={aiContext}
+          theme={theme}
+          addNotification={addNotification}
+        />
+      )}
+      
       {/* Main Content */}
       <div className="relative">
         {renderCurrentFlow()}
@@ -775,18 +784,37 @@ function App() {
 
       {/* Enhanced Keyboard shortcut hint with theme support */}
       <div className="fixed bottom-4 right-4 z-30">
-        <button
-          onClick={() => setShowCommandPalette(true)}
-          className={`${theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-800 hover:bg-slate-700'} text-white p-3 rounded-full shadow-clean-lg transition-colors group`}
-          title="Command Palette"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div className={`absolute bottom-full right-0 mb-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-800'} text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap`}>
-            Press Ctrl+K
-          </div>
-        </button>
+        <div className="flex flex-col space-y-2">
+          {/* AI Assistant Toggle */}
+          {generatedPlan && (
+            <button
+              onClick={() => setShowFloatingAI(!showFloatingAI)}
+              className={`${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'} text-white p-3 rounded-full shadow-clean-lg transition-colors group ray-glow`}
+              title="Toggle AI Assistant"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <div className={`absolute bottom-full right-0 mb-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-800'} text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap`}>
+                AI Assistant
+              </div>
+            </button>
+          )}
+          
+          {/* Command Palette */}
+          <button
+            onClick={() => setShowCommandPalette(true)}
+            className={`${theme === 'dark' ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-800 hover:bg-slate-700'} text-white p-3 rounded-full shadow-clean-lg transition-colors group`}
+            title="Command Palette"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div className={`absolute bottom-full right-0 mb-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-800'} text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap`}>
+              Press Ctrl+K
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   );
