@@ -601,7 +601,7 @@ const PlanGeneration = ({
                         ⏱️ {Math.floor(generatedPlan.table_of_contents.total_estimated_time / 60)}h {generatedPlan.table_of_contents.total_estimated_time % 60}m
                       </div>
                       <div className="text-accent-blue font-mono text-sm">
-                        📊 {generatedPlan.table_of_contents.difficulty_level.toUpperCase()}
+                        📊 {generatedPlan.table_of_contents?.difficulty_level?.toUpperCase() || 'BEGINNER'}
                       </div>
                     </div>
                     
