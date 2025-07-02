@@ -31,10 +31,10 @@ const FLOW_STEPS = {
   PROGRESS: 'progress'
 };
 
-// Main App Component with EMERGENT Design + Dark Theme
+// Main App Component with Modern AI Era Design
 function App() {
-  const [currentFlow, setCurrentFlow] = useState(FLOW_STEPS.MULTI_GATE_ONBOARDING);
-  const [theme, setTheme] = useState('light'); // 'light' or 'dark'
+  const [currentFlow, setCurrentFlow] = useState(FLOW_STEPS.ONBOARDING);
+  const [theme, setTheme] = useState('dark'); // Always dark for modern AI era
   const [flowData, setFlowData] = useState({});
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
@@ -44,10 +44,10 @@ function App() {
   const [careerCanvasData, setCareerCanvasData] = useState(null);
   const [generatedPlan, setGeneratedPlan] = useState(null);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [cvAnalysis, setCvAnalysis] = useState(null);
   const [aiContext, setAiContext] = useState({});
   const [showFloatingAI, setShowFloatingAI] = useState(true);
   const [enhancedMode, setEnhancedMode] = useState(true);
+  const [showVoiceInterface, setShowVoiceInterface] = useState(true);
 
   useEffect(() => {
     // Check for existing session
