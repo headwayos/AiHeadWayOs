@@ -49,6 +49,7 @@ function App() {
   const [showFloatingAI, setShowFloatingAI] = useState(true);
   const [enhancedMode, setEnhancedMode] = useState(true);
   const [showVoiceInterface, setShowVoiceInterface] = useState(true);
+  const [showVoiceInterface, setShowVoiceInterface] = useState(true);
 
   useEffect(() => {
     // Check for existing session
