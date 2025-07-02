@@ -13,12 +13,14 @@ import CommandPalette from './components/CommandPalette';
 import RoadmapView from './components/RoadmapView';
 import NotebookInterface from './components/NotebookInterface';
 import NotificationCenter from './components/NotificationCenter';
+import MultiGateOnboarding from './components/MultiGateOnboarding';
+import PreplacedVisualMap from './components/PreplacedVisualMap';
 
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
-// EMERGENT-style Flow management
+// EMERGENT-style Flow management with Dark Theme Support
 const FLOW_STEPS = {
-  ONBOARDING: 'onboarding',
+  MULTI_GATE_ONBOARDING: 'multi_gate_onboarding',
   DASHBOARD: 'dashboard',
   ASSESSMENT: 'assessment',
   CAREER_CANVAS: 'career_canvas',
@@ -26,12 +28,14 @@ const FLOW_STEPS = {
   ROADMAP: 'roadmap',
   NOTEBOOK: 'notebook',
   LEARNING_SESSION: 'learning_session',
-  PROGRESS: 'progress'
+  PROGRESS: 'progress',
+  VISUAL_MAP: 'visual_map'
 };
 
-// Main App Component with EMERGENT Design
+// Main App Component with EMERGENT Design + Dark Theme
 function App() {
-  const [currentFlow, setCurrentFlow] = useState(FLOW_STEPS.ONBOARDING);
+  const [currentFlow, setCurrentFlow] = useState(FLOW_STEPS.MULTI_GATE_ONBOARDING);
+  const [theme, setTheme] = useState('light'); // 'light' or 'dark'
   const [flowData, setFlowData] = useState({});
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
@@ -41,21 +45,28 @@ function App() {
   const [careerCanvasData, setCareerCanvasData] = useState(null);
   const [generatedPlan, setGeneratedPlan] = useState(null);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [cvAnalysis, setCvAnalysis] = useState(null);
 
   useEffect(() => {
     // Check for existing session
     const savedFlow = localStorage.getItem('emerald_learn_flow');
+    const savedTheme = localStorage.getItem('emerald_theme') || 'light';
+    
     if (savedFlow) {
       try {
         const flowState = JSON.parse(savedFlow);
-        setCurrentFlow(flowState.step || FLOW_STEPS.ONBOARDING);
+        setCurrentFlow(flowState.step || FLOW_STEPS.MULTI_GATE_ONBOARDING);
         setFlowData(flowState.data || {});
         setGeneratedPlan(flowState.plan || null);
         setCurrentChapter(flowState.chapter || 0);
+        setCvAnalysis(flowState.cvAnalysis || null);
       } catch (e) {
         console.error('Error loading saved flow:', e);
       }
     }
+    
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
     
     fetchUserProgress();
     setupKeyboardShortcuts();
@@ -67,9 +78,22 @@ function App() {
       step: currentFlow,
       data: flowData,
       plan: generatedPlan,
-      chapter: currentChapter
+      chapter: currentChapter,
+      cvAnalysis: cvAnalysis
     }));
-  }, [currentFlow, flowData, generatedPlan, currentChapter]);
+  }, [currentFlow, flowData, generatedPlan, currentChapter, cvAnalysis]);
+
+  // Save theme
+  useEffect(() => {
+    localStorage.setItem('emerald_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    addNotification(`Switched to ${newTheme} mode`, 'info');
+  };
 
   const setupKeyboardShortcuts = () => {
     const handleKeyDown = (e) => {
