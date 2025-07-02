@@ -17,6 +17,16 @@ import re
 import tempfile
 import shutil
 
+# Mock database for this example (replace with actual database in production)
+assessments_db = {}
+assessment_results_db = {}
+learning_plans_db = {}
+learning_sessions_db = {}
+chat_messages_db = {}
+user_progress_db = {}
+achievements_db = {}
+cv_analyses = {}
+
 # CV Analysis Models
 class CVAnalysisResult(BaseModel):
     skills: List[str] = []
