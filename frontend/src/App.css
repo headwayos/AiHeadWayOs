@@ -201,7 +201,8 @@
 
 /* Notebook Content Styling */
 .notebook-content {
-  @apply prose prose-slate max-w-none;
+  line-height: 1.6;
+  color: #64748b;
 }
 
 .notebook-content h1 {
