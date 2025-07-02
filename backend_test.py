@@ -1496,7 +1496,8 @@ def test_get_chapter_content(plan_id: str, chapter_id: str):
             "chapter_id": data["id"],
             "title": data["title"],
             "sections_count": len(data["sections"]),
-            "estimated_time": data["estimated_time"]
+            "estimated_time": data["estimated_time"],
+            "chapter_data": data  # Return the full chapter data for use in section testing
         }
     except requests.exceptions.RequestException as e:
         print(f"Get chapter content request failed: {e}")
