@@ -430,6 +430,16 @@ function App() {
                   
                   <div className="flex items-center space-x-2">
                     <button
+                      onClick={() => setEnhancedMode(!enhancedMode)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        enhancedMode
+                          ? 'bg-blue-600 text-white'
+                          : `${theme === 'dark' ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`
+                      }`}
+                    >
+                      {enhancedMode ? '🚀 Enhanced' : '📋 Standard'}
+                    </button>
+                    <button
                       onClick={toggleTheme}
                       className={`theme-toggle ${theme === 'dark' ? 'bg-slate-700 border-slate-600 text-slate-300 hover:bg-slate-600' : ''}`}
                       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
@@ -438,7 +448,7 @@ function App() {
                     </button>
                     <button
                       onClick={() => setCurrentFlow(FLOW_STEPS.NOTEBOOK)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium ray-glow"
                     >
                       📖 Start Learning
                     </button>
@@ -456,13 +466,23 @@ function App() {
               </div>
             </div>
 
-            <RoadmapView
-              plan={generatedPlan}
-              onChapterSelect={handleChapterSelect}
-              currentChapter={currentChapter}
-              userProgress={userProgress}
-              theme={theme}
-            />
+            {enhancedMode ? (
+              <EnhancedRoadmapView
+                plan={generatedPlan}
+                onChapterSelect={handleChapterSelect}
+                currentChapter={currentChapter}
+                userProgress={userProgress}
+                theme={theme}
+              />
+            ) : (
+              <RoadmapView
+                plan={generatedPlan}
+                onChapterSelect={handleChapterSelect}
+                currentChapter={currentChapter}
+                userProgress={userProgress}
+                theme={theme}
+              />
+            )}
           </div>
         );
 
