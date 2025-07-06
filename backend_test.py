@@ -1666,4 +1666,24 @@ def run_specific_tests():
     return test_results
 
 if __name__ == "__main__":
-    run_comprehensive_tests()
+    # Check if a specific test is requested
+    if len(sys.argv) > 1:
+        test_name = sys.argv[1]
+        if test_name == "visual_map":
+            run_test("Visual Map Learning Plan Generation", test_visual_map_learning_plan)
+        elif test_name == "topics":
+            run_test("Get Topics", test_get_topics)
+        elif test_name == "assessment":
+            run_test("Generate Assessment", test_generate_assessment)
+        elif test_name == "learning_plan":
+            run_test("Generate Learning Plan", test_generate_learning_plan)
+        elif test_name == "skip_assessment":
+            run_test("Generate Learning Plan with Skip Assessment", test_generate_learning_plan_with_skip_assessment)
+        elif test_name == "comprehensive":
+            run_comprehensive_tests()
+        else:
+            print(f"Unknown test: {test_name}")
+            print("Available tests: visual_map, topics, assessment, learning_plan, skip_assessment, comprehensive")
+    else:
+        # Run all tests by default
+        run_comprehensive_tests()
