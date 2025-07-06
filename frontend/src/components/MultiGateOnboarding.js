@@ -457,6 +457,16 @@ const MultiGateOnboarding = ({ onComplete, addNotification, theme, toggleTheme }
     </div>
   );
 
+  const renderVisualMap = () => {
+    return (
+      <PreplacedVisualMap
+        onComplete={onComplete}
+        addNotification={addNotification}
+        theme={theme}
+      />
+    );
+  };
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 'welcome':
