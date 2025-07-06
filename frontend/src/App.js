@@ -739,7 +739,7 @@ function App() {
   return (
     <div className={`App min-h-screen ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'} relative`}>
       {/* Command Palette */}
-      <CommandPalette
+      <ModernCommandPalette
         isOpen={showCommandPalette}
         onClose={() => setShowCommandPalette(false)}
         onCommand={handleCommandPaletteAction}
