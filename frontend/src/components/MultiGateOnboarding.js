@@ -478,7 +478,7 @@ const MultiGateOnboarding = ({ onComplete, addNotification, theme, toggleTheme }
       case 'basic_setup':
         return renderWelcomeScreen(); // Will implement basic setup
       case 'visual_map':
-        return renderWelcomeScreen(); // Will implement visual map
+        return renderVisualMap();
       default:
         return renderWelcomeScreen();
     }
