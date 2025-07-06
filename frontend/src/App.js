@@ -21,6 +21,7 @@ const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 // Modern AI Era Flow management
 const FLOW_STEPS = {
   ONBOARDING: 'onboarding',
+  MULTI_GATE_ONBOARDING: 'multi_gate_onboarding',
   DASHBOARD: 'dashboard',
   ASSESSMENT: 'assessment',
   CAREER_CANVAS: 'career_canvas',
@@ -28,7 +29,8 @@ const FLOW_STEPS = {
   ROADMAP: 'roadmap',
   NOTEBOOK: 'notebook',
   LEARNING_SESSION: 'learning_session',
-  PROGRESS: 'progress'
+  PROGRESS: 'progress',
+  VISUAL_MAP: 'visual_map'
 };
 
 // Main App Component with Modern AI Era Design
