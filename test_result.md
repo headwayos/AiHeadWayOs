@@ -472,6 +472,20 @@ frontend:
         - agent: "testing"
         - comment: "Visual inspection of the UI shows the welcome screen with proper styling, progress indicator, and feature cards. The UI appears to be working correctly for the welcome screen, which is the first step of the onboarding flow."
 
+  - task: "Visual Map Functionality"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/PreplacedVisualMap.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+        - agent: "main"
+        - comment: "Implemented Visual Map functionality with interactive cybersecurity domain selection and plan generation"
+        - working: "partial"
+        - agent: "testing"
+        - comment: "Visual Map interface loads correctly with cybersecurity domains displayed as interactive nodes. Domain selection works properly, showing detailed information about the selected domain. The 'Generate Plan' button is enabled after selection. However, there's an issue with the final step - after clicking 'Generate Plan', the application doesn't navigate to the Learning Roadmap page within the expected timeframe."
 metadata:
   created_by: "testing_agent"
   version: "1.0"
