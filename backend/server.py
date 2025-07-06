@@ -18,8 +18,8 @@ import tempfile
 import shutil
 
 # Import enhanced AI services and routes
-from ai_services import ai_service
-from enhanced_routes import router as enhanced_router
+from backend.ai_services import ai_service
+from backend.enhanced_routes import router as enhanced_router
 
 # CV Analysis Models
 class CVAnalysisResult(BaseModel):
