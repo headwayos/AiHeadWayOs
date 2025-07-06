@@ -47,8 +47,8 @@ const FLOW_STEPS = {
 
 // Main App Component with Modern AI Era Design
 function App() {
-  const [currentFlow, setCurrentFlow] = useState(FLOW_STEPS.ONBOARDING);
-  const [theme, setTheme] = useState('dark'); // Always dark for modern AI era
+  const [currentFlow, setCurrentFlow] = useState(FLOW_STEPS.MULTI_GATE_ONBOARDING);
+  const [theme, setTheme] = useState('light'); // Default to light theme for better compatibility
   const [flowData, setFlowData] = useState({});
   const [assessmentResult, setAssessmentResult] = useState(null);
   const [userProgress, setUserProgress] = useState(null);
