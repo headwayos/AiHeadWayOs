@@ -2330,8 +2330,9 @@ async def health_check():
         "mock_mode": MOCK_OLLAMA
     }
 
-# Include the router in the main app
+# Include the routers in the main app
 app.include_router(api_router)
+app.include_router(enhanced_router)  # Add the enhanced AI-powered routes
 
 app.add_middleware(
     CORSMiddleware,
