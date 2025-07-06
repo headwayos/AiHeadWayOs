@@ -6,7 +6,7 @@ import asyncio
 from .ai_services import ai_service
 from .models import (
     RoadmapRequest, RoadmapResponse, LessonRequest, LessonResponse,
-    AssessmentRequest, AssessmentResponse, MarketInsightsRequest, MarketInsightsResponse,
+    AssessmentRequest, AssessmentResponse, MarketInsightsRequest, MarketInsightsResponse, MarketInsights,
     LabExerciseRequest, LabExercise, CloudLabRequest, CloudLabEnvironment
 )
 
