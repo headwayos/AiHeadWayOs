@@ -1137,6 +1137,99 @@ def run_all_tests():
     
     return test_results
 
+def test_visual_map_learning_plan():
+    """Test the generate learning plan endpoint with Visual Map parameters"""
+    try:
+        # Visual Map specific request parameters
+        request_data = {
+            "topic": "network-security",
+            "level": "beginner", 
+            "duration_weeks": 6,
+            "focus_areas": ["Firewall Management", "IDS/IPS", "VPN Configuration", "Network Monitoring"],
+            "user_background": "Visual Map Selection: Network Security",
+            "skip_assessment": True
+        }
+        
+        print(f"Testing Visual Map learning plan generation with parameters: {json.dumps(request_data, indent=2)}")
+        
+        response = requests.post(
+            f"{API_BASE_URL}/generate-learning-plan",
+            json=request_data,
+            timeout=300  # 5 minutes timeout for generation
+        )
+        
+        # Check if the request was successful
+        if response.status_code != 200:
+            print(f"Visual Map learning plan generation failed with status code {response.status_code}: {response.text}")
+            return {
+                "success": False,
+                "status_code": response.status_code,
+                "error": response.text
+            }
+        
+        data = response.json()
+        
+        # Check if the response contains the expected fields
+        expected_fields = ["success", "plan_id", "curriculum", "topic", "level", "duration_weeks", "table_of_contents"]
+        for field in expected_fields:
+            if field not in data:
+                print(f"Visual Map learning plan response missing expected field '{field}': {data}")
+                return False
+        
+        # Check if the plan_id is a valid UUID
+        try:
+            uuid_obj = uuid.UUID(data["plan_id"])
+            if str(uuid_obj) != data["plan_id"]:
+                print(f"plan_id is not a valid UUID: {data['plan_id']}")
+                return False
+        except ValueError:
+            print(f"plan_id is not a valid UUID: {data['plan_id']}")
+            return False
+        
+        # Check if table_of_contents has the expected structure
+        toc = data["table_of_contents"]
+        if not isinstance(toc, dict):
+            print(f"table_of_contents is not a dictionary: {toc}")
+            return False
+        
+        expected_toc_fields = ["chapters", "total_chapters", "total_estimated_time", "difficulty_level"]
+        for field in expected_toc_fields:
+            if field not in toc:
+                print(f"table_of_contents missing expected field '{field}': {toc}")
+                return False
+        
+        # Check if chapters is a list and has at least one chapter
+        if not isinstance(toc["chapters"], list) or len(toc["chapters"]) == 0:
+            print(f"chapters is not a list or is empty: {toc['chapters']}")
+            return False
+        
+        # Check the structure of the first chapter
+        first_chapter = toc["chapters"][0]
+        expected_chapter_fields = ["id", "number", "title", "sections"]
+        for field in expected_chapter_fields:
+            if field not in first_chapter:
+                print(f"Chapter missing expected field '{field}': {first_chapter}")
+                return False
+        
+        print(f"Visual Map learning plan generated successfully with ID: {data['plan_id']}")
+        print(f"Table of Contents: {toc['total_chapters']} chapters, {toc['total_estimated_time']} minutes estimated time")
+        print(f"Difficulty level: {toc['difficulty_level']}")
+        
+        return {
+            "success": True,
+            "plan_id": data["plan_id"],
+            "curriculum_length": len(data["curriculum"]),
+            "topic": data["topic"],
+            "level": data["level"],
+            "total_chapters": toc["total_chapters"],
+            "total_estimated_time": toc["total_estimated_time"],
+            "difficulty_level": toc["difficulty_level"],
+            "focus_areas": request_data["focus_areas"]
+        }
+    except requests.exceptions.RequestException as e:
+        print(f"Visual Map learning plan request failed: {e}")
+        return False
+
 def run_comprehensive_tests():
     """Run comprehensive tests on all endpoints"""
     print(f"\n{'='*80}\nRunning Comprehensive Tests for Cybersecurity Learning Platform API\n{'='*80}")
@@ -1161,6 +1254,9 @@ def run_comprehensive_tests():
     
     # Test generate learning plan
     plan_result = run_test("Generate Learning Plan", test_generate_learning_plan)
+    
+    # Test Visual Map learning plan generation
+    visual_map_result = run_test("Visual Map Learning Plan Generation", test_visual_map_learning_plan)
     
     # Test generate learning plan with skip_assessment=true
     skip_result = run_test("Generate Learning Plan with Skip Assessment", test_generate_learning_plan_with_skip_assessment)
