@@ -16,6 +16,18 @@ import NotebookInterface from './components/NotebookInterface';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
 import NotificationCenter from './components/NotificationCenter';
 
+// Import Multi-Gate Onboarding and Visual Map Components
+import MultiGateOnboarding from './components/MultiGateOnboarding';
+import PreplacedVisualMap from './components/PreplacedVisualMap';
+import EnhancedVisualMap from './components/EnhancedVisualMap';
+import VisualLearningMap from './components/VisualLearningMap';
+
+// Import Enhanced Dashboard
+import EnhancedDashboard from './components/EnhancedDashboard';
+
+// Import Roadmap Components
+import RoadmapView from './components/RoadmapView';
+
 const API = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api';
 
 // Modern AI Era Flow management
