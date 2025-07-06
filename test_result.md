@@ -494,6 +494,7 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Visual Map Functionality"
     - "Assessment Interface"
     - "Learning Session & AI Chat"
     - "Enhanced Dashboard"
