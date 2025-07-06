@@ -454,21 +454,9 @@ To begin working with {prompt}:
         specialization_text = f" with focus on {specialization}" if specialization else ""
         
         prompt = f"""Create a comprehensive career roadmap for {career_field}{specialization_text} 
-        for someone at {experience_level} level.
+        for someone at {experience_level} level."""
         
-        Include:
-        - Learning phases (beginner to advanced)
-        - Essential skills and technologies
-        - Timeline estimates
-        - Hands-on projects
-        - Certifications
-        - Market demand analysis
-        - Salary progression
-        - Industry trends for 2025
-        
-        Make it actionable and detailed."""
-        
-        content = await self.generate_content(prompt, system_prompt, 1500)
+        content = await self._generate_mock_content(prompt, "roadmap")
         
         return {
             "career_field": career_field,
@@ -481,36 +469,7 @@ To begin working with {prompt}:
     
     async def generate_lesson_content(self, topic: str, difficulty: str, lesson_type: str = "tutorial") -> Dict[str, Any]:
         """Generate exhaustive MDN-style lesson content"""
-        system_prompt = """You are an expert educational content creator specializing in creating 
-        comprehensive, MDN-style documentation and tutorials. Create detailed, structured content with:
-        1. Clear introduction and objectives
-        2. Step-by-step explanations
-        3. Code examples with explanations
-        4. Visual diagrams descriptions
-        5. Practical exercises
-        6. Key concepts summary
-        7. Further reading suggestions
-        8. Common pitfalls and solutions
-        
-        Format the content with proper headings, code blocks, and structured sections."""
-        
-        prompt = f"""Create exhaustive {lesson_type} content for: {topic}
-        
-        Difficulty Level: {difficulty}
-        
-        Structure the content like MDN documentation with:
-        - Introduction and Learning Objectives
-        - Detailed Explanation with Examples
-        - Code Samples (where applicable)
-        - Visual Concepts (describe diagrams/charts)
-        - Hands-on Exercise
-        - Key Takeaways
-        - Further Reading
-        - Common Mistakes to Avoid
-        
-        Make it comprehensive and practical."""
-        
-        content = await self.generate_content(prompt, system_prompt, 2000)
+        content = await self._generate_mock_content(topic, "lesson")
         
         return {
             "topic": topic,
@@ -523,33 +482,7 @@ To begin working with {prompt}:
     
     async def generate_skill_assessment(self, skill: str, level: str, question_count: int = 10) -> Dict[str, Any]:
         """Generate comprehensive skill assessment"""
-        system_prompt = """You are an expert assessment designer. Create comprehensive skill assessments with:
-        1. Multiple choice questions
-        2. Practical coding challenges
-        3. Scenario-based questions
-        4. True/false questions
-        5. Fill-in-the-blank questions
-        
-        Include difficulty progression and clear evaluation criteria."""
-        
-        prompt = f"""Create a comprehensive skill assessment for {skill} at {level} level.
-        
-        Include {question_count} questions with mix of:
-        - Multiple choice (40%)
-        - Practical coding/scenario (30%)
-        - True/false (20%)
-        - Fill-in-the-blank (10%)
-        
-        For each question, provide:
-        - Question text
-        - Options (for MCQ)
-        - Correct answer
-        - Explanation
-        - Difficulty score (1-5)
-        
-        Format as JSON-like structure."""
-        
-        content = await self.generate_content(prompt, system_prompt, 1500)
+        content = await self._generate_mock_content(skill, "assessment")
         
         return {
             "skill": skill,
@@ -562,33 +495,7 @@ To begin working with {prompt}:
     
     async def generate_market_insights(self, role: str, location: str = "Global") -> Dict[str, Any]:
         """Generate market demand and salary insights"""
-        system_prompt = """You are a market research analyst specializing in tech job market trends.
-        Provide comprehensive market insights including:
-        1. Current demand levels
-        2. Salary ranges
-        3. Growth projections
-        4. Required skills
-        5. Industry trends
-        6. Remote work opportunities
-        7. Career advancement paths
-        
-        Base insights on 2024-2025 market data."""
-        
-        prompt = f"""Analyze the job market for {role} in {location}.
-        
-        Provide detailed insights on:
-        - Current demand level (High/Medium/Low)
-        - Salary ranges (entry, mid, senior)
-        - Job growth projections for next 2-3 years
-        - Most in-demand skills
-        - Industry trends affecting this role
-        - Remote work opportunities
-        - Career advancement paths
-        - Companies actively hiring
-        
-        Focus on actionable insights for 2025."""
-        
-        content = await self.generate_content(prompt, system_prompt, 1200)
+        content = await self._generate_mock_content(role, "market_insights")
         
         return {
             "role": role,
@@ -600,35 +507,7 @@ To begin working with {prompt}:
     
     async def generate_lab_exercise(self, technology: str, difficulty: str, duration: str = "30 minutes") -> Dict[str, Any]:
         """Generate hands-on lab exercise"""
-        system_prompt = """You are a practical learning expert. Create hands-on lab exercises with:
-        1. Clear objectives
-        2. Prerequisites
-        3. Step-by-step instructions
-        4. Code examples
-        5. Expected outputs
-        6. Troubleshooting tips
-        7. Extensions for further practice
-        
-        Make exercises practical and engaging."""
-        
-        prompt = f"""Create a hands-on lab exercise for {technology} at {difficulty} level.
-        
-        Duration: {duration}
-        
-        Include:
-        - Learning objectives
-        - Prerequisites
-        - Environment setup
-        - Step-by-step instructions
-        - Code examples with explanations
-        - Expected outputs
-        - Verification steps
-        - Troubleshooting common issues
-        - Extension challenges
-        
-        Make it practical and engaging."""
-        
-        content = await self.generate_content(prompt, system_prompt, 1500)
+        content = await self._generate_mock_content(technology, "lab")
         
         return {
             "technology": technology,
